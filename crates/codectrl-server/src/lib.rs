@@ -678,7 +678,7 @@ pub async fn run_server(
     };
 
     let data_dir = if let Some(data_directory) =
-        ProjectDirs::from("com", "Authentura", "codectrl-server")
+        ProjectDirs::from("com", "stboyden", "codectrl-server")
     {
         data_directory.data_dir().to_owned()
     } else {

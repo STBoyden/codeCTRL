@@ -2,29 +2,34 @@
 name = "codectrl"
 version = "1.0.0-beta"
 edition = "2021"
+authors = [
+  "Samuel Boyden <sam@sboyden.com>",
+]
 
 [workspace]
 members = [
   "crates/codectrl-gui",
   "crates/codectrl-server",
+  "crates/protobuf-bindings",
+  "crates/logger"
 ]
 
 [workspace.package]
 version = "1.0.0-beta"
 edition = "2021"
 authors = [
-  "Authentura <contact@authentura.com>",
-  "Samuel Boyden <s.boyden@authentura.com>",
+  "Samuel Boyden <sam@sboyden.com>",
 ]
-description = "A dynamic source code analysis tool, made by Authentura."
+description = "A dynamic source code analysis tool, made by Samuel Boyden."
 license = "MIT"
 rust-version = "1.70.0"
 readme = "README.md"
-homepage = "https://codectrl.authentura.com"
+homepage = "https://github.com/STBoyden/codectrl"
+repository = "https://github.com/STBoyden/codectrl"
 
 [workspace.dependencies]
 anyhow = "1.0"
-codectrl-protobuf-bindings = { git = "https://github.com/Authentura/codectrl-rust-protobuf-bindings", tag = "v0.8.3" }
+codectrl-protobuf-bindings = { path = "crates/protobuf-bindings"}
 parking_lot = "0.12.1"
 tokio = { version = "1.0", features = [
     "rt-multi-thread",
@@ -45,8 +50,8 @@ codectrl-server = { path = "crates/codectrl-server" }
 
 [package.metadata.deb]
 name = "codectrl"
-maintainer = "Samuel Boyden <s.boyden@authentura.com>"
-copyright = "2022, Authentura <contact@authentura.com>"
+maintainer = "Samuel Boyden <sam@stboyden.com>"
+copyright = "2023, Samuel Boyden <sam@stboyden.com>"
 license-file = ["LICENSE", "4"]
 assets = [
   [

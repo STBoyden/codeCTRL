@@ -549,6 +549,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "ciborium"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "effd91f6c78e5a4ace8a5d3c0b6bfaec9e2baaef55f3efc00e45fb2e477ee926"
+dependencies = [
+ "ciborium-io",
+ "ciborium-ll",
+ "serde",
+]
+
+[[package]]
+name = "ciborium-io"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cdf919175532b369853f5d5e20b26b43112613fd6fe7aee757e35f7a44642656"
+
+[[package]]
+name = "ciborium-ll"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "defaa24ecc093c77630e6c15e17c51f5e187bf35ee514f4e2d67baaa96dae22b"
+dependencies = [
+ "ciborium-io",
+ "half",
+]
+
+[[package]]
 name = "clipboard-win"
 version = "4.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -639,8 +666,7 @@ dependencies = [
 
 [[package]]
 name = "codectrl-bindings-native"
-version = "0.0.0"
-source = "git+https://github.com/Authentura/codectrl-rust-protobuf-bindings?tag=v0.8.3#8abafe7646555466cc65bc339eb60e3d8367fe82"
+version = "1.0.0-beta"
 dependencies = [
  "prost 0.10.4",
  "prost-build",
@@ -652,8 +678,7 @@ dependencies = [
 
 [[package]]
 name = "codectrl-bindings-web"
-version = "0.0.0"
-source = "git+https://github.com/Authentura/codectrl-rust-protobuf-bindings?tag=v0.8.3#8abafe7646555466cc65bc339eb60e3d8367fe82"
+version = "1.0.0-beta"
 dependencies = [
  "prost 0.10.4",
  "prost-build",
@@ -682,9 +707,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "codectrl-logger"
+version = "1.0.0-beta"
+dependencies = [
+ "anyhow",
+ "backtrace",
+ "chrono",
+ "ciborium",
+ "codectrl-protobuf-bindings",
+ "futures-util",
+ "hashbag",
+ "rand",
+ "serde",
+ "thiserror",
+ "tokio",
+ "tonic",
+]
+
+[[package]]
 name = "codectrl-protobuf-bindings"
-version = "0.8.3"
-source = "git+https://github.com/Authentura/codectrl-rust-protobuf-bindings?tag=v0.8.3#8abafe7646555466cc65bc339eb60e3d8367fe82"
+version = "1.0.0-beta"
 dependencies = [
  "codectrl-bindings-native",
  "codectrl-bindings-web",
@@ -1791,6 +1833,18 @@ dependencies = [
  "tokio-util",
  "tracing",
 ]
+
+[[package]]
+name = "half"
+version = "1.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eabb4a44450da02c90444cf74558da904edde8fb4e9035a9a6a4e15445af0bd7"
+
+[[package]]
+name = "hashbag"
+version = "0.1.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b3d44c238cb72d3e8993a30c32e97b2b2c2c1a12388603f28c4f19a44c4396bc"
 
 [[package]]
 name = "hashbrown"
