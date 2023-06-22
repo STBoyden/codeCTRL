@@ -1,0 +1,3 @@
+[submodule "crates/protobuf-bindings/protos"]
+	path = crates/protobuf-bindings/protos
+	url = git@github.com:STBoyden/codectrl-protobuf-specifications

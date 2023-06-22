@@ -1,24 +1,24 @@
 # CodeCTRL
 
-[![Formatting](https://github.com/Authentura/codectrl/actions/workflows/reformat.yml/badge.svg)](https://github.com/Authentura/codectrl/actions/workflows/reformat.yml)
-[![Clippy](https://github.com/Authentura/codectrl/actions/workflows/clippy.yml/badge.svg)](https://github.com/Authentura/codectrl/actions/workflows/clippy.yml)
-[![Build & Packaging](https://github.com/Authentura/codectrl/actions/workflows/build-and-package.yml/badge.svg)](https://github.com/Authentura/codectrl/actions/workflows/build-and-package.yml)
+[![Formatting](https://github.com/STBoyden/codectrl/actions/workflows/reformat.yml/badge.svg)](https://github.com/STBoyden/codectrl/actions/workflows/reformat.yml)
+[![Clippy](https://github.com/STBoyden/codectrl/actions/workflows/clippy.yml/badge.svg)](https://github.com/STBoyden/codectrl/actions/workflows/clippy.yml)
+[![Build & Packaging](https://github.com/STBoyden/codectrl/actions/workflows/build-and-package.yml/badge.svg)](https://github.com/STBoyden/codectrl/actions/workflows/build-and-package.yml)
 
 ## Implementing a logger for a language
 
 By default, these are the officially supported loggers:
 
-| Language | Updated to gRPC? | Link                                                         |
-| :------- | :--------------- | :----------------------------------------------------------- |
-| Rust     | Yes              | [Here](https://github.com/Authentura/codectrl-rust-logger)   |
-| C++      | No               | [Here](https://github.com/Authentura/codectrl-cxx-logger)    |
-| Python   | No (WIP)         | [Here](https://github.com/Authentura/codectrl-python-logger) |
-| PHP      | Yes              | [Here](https://github.com/Authentura/codectrl-php-logger)    |
-| NodeJS   | Yes              | [Here](https://github.com/Authentura/codectrl-nodejs-logger) |
+| Language | Updated to gRPC? | Link                                                       |
+| :------- | :--------------- | :--------------------------------------------------------- |
+| Rust     | Yes              | [Here](https://github.com/STBoyden/codectrl-rust-logger)   |
+| C++      | No               | [Here](https://github.com/STBoyden/codectrl-cxx-logger)    |
+| Python   | No (WIP)         | [Here](https://github.com/STBoyden/codectrl-python-logger) |
+| PHP      | Yes              | [Here](https://github.com/STBoyden/codectrl-php-logger)    |
+| NodeJS   | Yes              | [Here](https://github.com/STBoyden/codectrl-nodejs-logger) |
 
 All language loggers now need to use gRPC in order to implement the API schema.
 The protobuf files are available
-[here](https://github.com/Authentura/codectrl-protobuf-specifications).
+[here](https://github.com/STBoyden/codectrl-protobuf-specifications).
 
 Unofficial language loggers:
 
@@ -41,7 +41,7 @@ Planned support:
 - MacOS (M1 and legacy Intel systems)
 
 Packages for the supported distributions listed above can be found
-[here](https://github.com/Authentura/codectrl/actions/workflows/build-and-package.yml)
+[here](https://github.com/STBoyden/codectrl/actions/workflows/build-and-package.yml)
 underneath each of the **_completed_** CI jobs.
 
 ### Linux
@@ -114,4 +114,4 @@ the root of this project.
 
 A MSI for Windows is automatically generated on every commit of the CodeCTRL
 `main` branch and can be found in one of the completed workflow runs
-[here](https://github.com/Authentura/codectrl/actions/workflows/build-and-package.yml).
+[here](https://github.com/STBoyden/codectrl/actions/workflows/build-and-package.yml).

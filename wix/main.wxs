@@ -62,16 +62,15 @@
     <Product
         Id='*'
         Name='codectrl'
-        UpgradeCode='A9898B74-4CDE-4B36-875C-1B8A02016036'
-        Manufacturer='Authentura'
+        UpgradeCode='435B38CA-CDD0-43CF-9BF7-5EE4B91A737E'
+        Manufacturer='Samuel Boyden'
         Language='1033'
         Codepage='1252'
         Version='$(var.Version)'>
 
         <Package Id='*'
             Keywords='Installer'
-            Description='A source code analytic tool. Using egui version 0.18.'
-            Manufacturer='Authentura'
+            Manufacturer='Samuel Boyden'
             InstallerVersion='450'
             Languages='1033'
             Compressed='yes'
@@ -89,23 +88,29 @@
         <Directory Id='TARGETDIR' Name='SourceDir'>
             <Directory Id='$(var.PlatformProgramFilesFolder)' Name='PFiles'>
                 <Directory Id='APPLICATIONFOLDER' Name='codectrl'>
-                    <!--
-                      Disabling the license sidecar file in the installer is a two step process:
-
-                      1. Comment out or remove the `Component` tag along with its contents.
-                      2. Comment out or remove the `ComponentRef` tag with the "License" Id
-                         attribute value further down in this file.
-                    -->
-                    <Component Id='License' Guid='*'>
-                        <File Id='LicenseFile'
-                            Name='License.rtf'
-                            DiskId='1'
-                            Source='wix/License.rtf'
-                            KeyPath='yes'/>
-                    </Component>
                     
+                    <!--
+                      Enabling the license sidecar file in the installer is a four step process:
+
+                      1. Uncomment the `Component` tag and its contents.
+                      2. Change the value for the `Source` attribute in the `File` tag to a path
+                         to the file that should be included as the license sidecar file. The path
+                         can, and probably should be, relative to this file.
+                      3. Change the value for the `Name` attribute in the `File` tag to the
+                         desired name for the file when it is installed alongside the `bin` folder
+                         in the installation directory. This can be omitted if the desired name is
+                         the same as the file name.
+                      4. Uncomment the `ComponentRef` tag with the Id attribute value of "License"
+                         further down in this file.
+                    -->
+                    <!--
+                    <Component Id='License' Guid='*'>
+                        <File Id='LicenseFile' Name='ChangeMe' DiskId='1' Source='C:\Path\To\File' KeyPath='yes'/>
+                    </Component>
+                    -->
+
                     <Directory Id='Bin' Name='bin'>
-                        <Component Id='Path' Guid='B6A3E784-620E-4D41-85E6-0543B7BB4CF2' KeyPath='yes'>
+                        <Component Id='Path' Guid='9CC24BCD-9E1E-4A1A-AD38-00BEA6B4B729' KeyPath='yes'>
                             <Environment
                                 Id='PATH'
                                 Name='PATH'
@@ -137,12 +142,13 @@
             AllowAdvertise='no'
             Display='expand'
             Absent='disallow'>
-            <!--
-              Comment out or remove the following `ComponentRef` tag to remove
-              the license sidecar file from the installer.
-            -->
-            <ComponentRef Id='License'/>
             
+            <!--
+              Uncomment the following `ComponentRef` tag to add the license
+              sidecar file to the installer.
+            -->
+            <!--<ComponentRef Id='License'/>-->
+
             <ComponentRef Id='binary0'/>
 
             <Feature
@@ -167,31 +173,47 @@
         <!--<Icon Id='ProductICO' SourceFile='wix\Product.ico'/>-->
         <!--<Property Id='ARPPRODUCTICON' Value='ProductICO' />-->
 
-        <Property Id='ARPHELPLINK' Value='https://codectrl.authentura.com'/>
         
+        <!--
+          Adding a URL to Add/Remove Programs control panel listing for the
+          application is a two step process:
+
+          1. Uncomment the following `Property` tag with the "ARPHELPLINK" Id
+             attribute value.
+          2. Change the value for `Value` attribute of the following
+             `Property` tag to a valid URL.
+        -->
+        <!--<Property Id='ARPHELPLINK' Value='ChangeMe'/>-->
+
         <UI>
             <UIRef Id='WixUI_FeatureTree'/>
-            <!--
-              Disabling the EULA dialog in the installer is a two step process:
-
-                 1. Uncomment the following two `Publish` tags
-                 2. Comment out or remove the `<WiXVariable Id='WixUILicenseRtf'...` tag further down
-
-            -->
-            <!--<Publish Dialog='WelcomeDlg' Control='Next' Event='NewDialog' Value='CustomizeDlg' Order='99'>1</Publish>-->
-            <!--<Publish Dialog='CustomizeDlg' Control='Back' Event='NewDialog' Value='WelcomeDlg' Order='99'>1</Publish>-->
             
+            <!--
+              Enabling the EULA dialog in the installer is a three step process:
+
+                1. Comment out or remove the two `Publish` tags that follow the
+                   `WixVariable` tag.
+                2. Uncomment the `<WixVariable Id='WixUILicenseRtf' Value='Path\to\Eula.rft'>` tag futher down
+                3. Replace the `Value` attribute of the `WixVariable` tag with
+                   the path to a RTF file that will be used as the EULA and
+                   displayed in the license agreement dialog.
+            -->
+            <Publish Dialog='WelcomeDlg' Control='Next' Event='NewDialog' Value='CustomizeDlg' Order='99'>1</Publish>
+            <Publish Dialog='CustomizeDlg' Control='Back' Event='NewDialog' Value='WelcomeDlg' Order='99'>1</Publish>
+
         </UI>
 
+        
         <!--
-          Disabling the EULA dialog in the installer requires commenting out
-          or removing the following `WixVariable` tag
+          Enabling the EULA dialog in the installer requires uncommenting
+          the following `WixUILicenseRTF` tag and changing the `Value`
+          attribute.
         -->
-        <WixVariable Id='WixUILicenseRtf' Value='wix/License.rtf'/>
-        
+        <!-- <WixVariable Id='WixUILicenseRtf' Value='Relative\Path\to\Eula.rtf'/> -->
+
         
         <!--
-          Uncomment the next `WixVaraible` tag to customize the installer's
+          Uncomment the next `WixVariable` tag to customize the installer's
           Graphical User Interface (GUI) and add a custom banner image across
           the top of each screen. See the WiX Toolset documentation for details
           about customization.

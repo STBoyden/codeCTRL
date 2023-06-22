@@ -1,0 +1,28 @@
+[package]
+name = "codectrl-logger"
+description = "The Rust logger integration for CodeCTRL"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0"
+backtrace = "0.3"
+ciborium = "0.2"
+futures-util = "0.3"
+hashbag = "0.1.9"
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "1.0"
+tokio = { workspace = true}
+codectrl-protobuf-bindings = { workspace = true }
+tonic = { workspace = true }
+
+[dev-dependencies]
+anyhow = "1.0"
+tokio = { workspace = true }
+chrono = "0.4"
+rand = "0.8"

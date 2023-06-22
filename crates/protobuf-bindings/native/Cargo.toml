@@ -1,0 +1,20 @@
+[package]
+name = "codectrl-bindings-native"
+description = "Generate Rust protobuf bindings for use with CodeCTRL and the Rust logger"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+prost = "0.10"
+serde = { version = "1.0", features = ["derive"] }
+tonic = { workspace = true }
+uuid = { version = "1.1", features = ["v4", "fast-rng", "macro-diagnostics"]}
+
+[build-dependencies]
+tonic-build = "0.7"
+prost-build = "0.10"

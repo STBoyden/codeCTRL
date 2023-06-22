@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+find web/ -name *.rs -not -path "*/target/*" -exec rm {} \;
+
+for file in $(find native/ -name *.rs -not -path "*/target/*"); do
+  base=$(echo "$file" | sed 's/native//g')
+
+  ln "$file" "web/$base"
+done
