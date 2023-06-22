@@ -1,6 +1,6 @@
 [package]
 name = "codectrl"
-version = "1.0.1-beta.0"
+version = "1.0.2-beta.0"
 edition = "2021"
 authors = [
   "Samuel Boyden <sam@sboyden.com>",
@@ -15,7 +15,7 @@ members = [
 ]
 
 [workspace.package]
-version = "1.0.1-beta.0"
+version = "1.0.2-beta.0"
 edition = "2021"
 authors = [
   "Samuel Boyden <sam@sboyden.com>",

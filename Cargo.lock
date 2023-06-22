@@ -658,7 +658,7 @@ dependencies = [
 
 [[package]]
 name = "codectrl"
-version = "1.0.1-beta.0"
+version = "1.0.2-beta.0"
 dependencies = [
  "codectrl-gui",
  "codectrl-server",
@@ -666,7 +666,7 @@ dependencies = [
 
 [[package]]
 name = "codectrl-bindings-native"
-version = "1.0.1-beta.0"
+version = "1.0.2-beta.0"
 dependencies = [
  "prost 0.10.4",
  "prost-build",
@@ -678,7 +678,7 @@ dependencies = [
 
 [[package]]
 name = "codectrl-bindings-web"
-version = "1.0.1-beta.0"
+version = "1.0.2-beta.0"
 dependencies = [
  "prost 0.10.4",
  "prost-build",
@@ -690,7 +690,7 @@ dependencies = [
 
 [[package]]
 name = "codectrl-gui"
-version = "1.0.1-beta.0"
+version = "1.0.2-beta.0"
 dependencies = [
  "anyhow",
  "async-stream",
@@ -708,7 +708,7 @@ dependencies = [
 
 [[package]]
 name = "codectrl-logger"
-version = "1.0.1-beta.0"
+version = "1.0.2-beta.0"
 dependencies = [
  "anyhow",
  "backtrace",
@@ -726,7 +726,7 @@ dependencies = [
 
 [[package]]
 name = "codectrl-protobuf-bindings"
-version = "1.0.1-beta.0"
+version = "1.0.2-beta.0"
 dependencies = [
  "codectrl-bindings-native",
  "codectrl-bindings-web",
@@ -734,7 +734,7 @@ dependencies = [
 
 [[package]]
 name = "codectrl-server"
-version = "1.0.1-beta.0"
+version = "1.0.2-beta.0"
 dependencies = [
  "anyhow",
  "codectrl-protobuf-bindings",
