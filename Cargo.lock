@@ -658,7 +658,7 @@ dependencies = [
 
 [[package]]
 name = "codectrl"
-version = "1.0.0-beta"
+version = "1.0.1-beta.0"
 dependencies = [
  "codectrl-gui",
  "codectrl-server",
@@ -666,7 +666,7 @@ dependencies = [
 
 [[package]]
 name = "codectrl-bindings-native"
-version = "1.0.0-beta"
+version = "1.0.1-beta.0"
 dependencies = [
  "prost 0.10.4",
  "prost-build",
@@ -678,7 +678,7 @@ dependencies = [
 
 [[package]]
 name = "codectrl-bindings-web"
-version = "1.0.0-beta"
+version = "1.0.1-beta.0"
 dependencies = [
  "prost 0.10.4",
  "prost-build",
@@ -690,7 +690,7 @@ dependencies = [
 
 [[package]]
 name = "codectrl-gui"
-version = "1.0.0-beta"
+version = "1.0.1-beta.0"
 dependencies = [
  "anyhow",
  "async-stream",
@@ -708,7 +708,7 @@ dependencies = [
 
 [[package]]
 name = "codectrl-logger"
-version = "1.0.0-beta"
+version = "1.0.1-beta.0"
 dependencies = [
  "anyhow",
  "backtrace",
@@ -726,7 +726,7 @@ dependencies = [
 
 [[package]]
 name = "codectrl-protobuf-bindings"
-version = "1.0.0-beta"
+version = "1.0.1-beta.0"
 dependencies = [
  "codectrl-bindings-native",
  "codectrl-bindings-web",
@@ -734,7 +734,7 @@ dependencies = [
 
 [[package]]
 name = "codectrl-server"
-version = "1.0.0-beta"
+version = "1.0.1-beta.0"
 dependencies = [
  "anyhow",
  "codectrl-protobuf-bindings",
@@ -2096,7 +2096,7 @@ dependencies = [
 [[package]]
 name = "iced_aw"
 version = "0.5.2"
-source = "git+https://github.com/iced-rs/iced_aw#d5950f7c467495e3ca1ec95692cef331ded7a748"
+source = "git+https://github.com/iced-rs/iced_aw#92b024ec01d06a79e21be63d1f1c896768a4c02e"
 dependencies = [
  "chrono",
  "iced_graphics",
