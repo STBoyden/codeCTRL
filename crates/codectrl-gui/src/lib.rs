@@ -28,10 +28,11 @@ use iced_aw::{
     split::Axis,
     Split,
 };
+use iced_native::futures::StreamExt;
 use parking_lot::Mutex;
 use std::{sync::Arc, time::Duration};
 use tokio::sync::mpsc;
-use tonic::{transport::Channel, Status};
+use tonic::{transport::Channel, Status, Streaming};
 
 pub enum PauseState {
     Paused,
@@ -43,7 +44,12 @@ type Client = LogServerClient<Channel>;
 pub enum GrpcConnection {
     NotConnected(String, u32),
     Connected(Client, Option<Connection>),
-    Registered(Connection, Client),
+    Registered(Client, Connection),
+    Streaming(
+        (Option<Result<Log, Status>>, Streaming<Log>),
+        Client,
+        Connection,
+    ),
     Error(Status, Client, Option<Connection>),
 }
 
@@ -52,6 +58,7 @@ pub enum Message {
     // main view
     ScrollToSelectedLogChanged(bool),
     LogAppearanceStateChanged,
+    LogClicked(Log),
 
     // searching view
     FilterTextChanged(String),
@@ -116,7 +123,6 @@ pub struct App {
     server_errors: Vec<Arc<anyhow::Error>>,
     host: String,
     port: u32,
-    logs: Vec<Log>,
 
     // splits
     split_size: Option<u16>,
@@ -138,7 +144,6 @@ impl App {
             port: flags.port,
             server_errors: vec![],
             server_errors_channel: None,
-            logs: vec![],
             split_size: Some(208),
             view_state: ViewState::default(),
             main_view: views::Main::default(),
@@ -181,8 +186,10 @@ impl Application for App {
         use Message::*;
 
         match message {
-            ScrollToSelectedLogChanged(_) | LogAppearanceStateChanged =>
-                self.main_view.update(message),
+            ScrollToSelectedLogChanged(_)
+            | LogAppearanceStateChanged
+            | ServerAddLog(_)
+            | LogClicked(_) => self.main_view.update(message),
 
             FilterTextChanged(_)
             | ClearFilterText
@@ -283,11 +290,6 @@ impl Application for App {
                 Command::none()
             },
             ServerNoOp => Command::none(),
-            ServerAddLog(log) => {
-                dbg!(&log.message);
-                self.logs.push(log);
-                Command::none()
-            },
             Quit => close(),
         }
     }
@@ -345,7 +347,7 @@ impl Application for App {
                                 {
                                     RequestStatus::Confirmed => (
                                         Message::ServerNoOp,
-                                        GrpcConnection::Registered(connection, client),
+                                        GrpcConnection::Registered(client, connection),
                                     ),
                                     RequestStatus::Error => todo!(),
                                 },
@@ -363,8 +365,8 @@ impl Application for App {
                                 Ok(response) => (
                                     Message::ServerNoOp,
                                     GrpcConnection::Registered(
-                                        response.into_inner(),
                                         client,
+                                        response.into_inner(),
                                     ),
                                 ),
                                 Err(status) => (
@@ -374,14 +376,18 @@ impl Application for App {
                             }
                         }
                     },
-                    GrpcConnection::Registered(connection, mut client) => {
-                        match client.get_log(connection.clone()).await {
+                    GrpcConnection::Registered(mut client, connection) => {
+                        match client.get_logs(connection.clone()).await {
                             Ok(res) => {
-                                let log = res.into_inner();
+                                let stream = res.into_inner();
 
                                 (
-                                    Message::ServerAddLog(log),
-                                    GrpcConnection::Registered(connection, client),
+                                    Message::ServerNoOp,
+                                    GrpcConnection::Streaming(
+                                        stream.into_future().await,
+                                        client,
+                                        connection,
+                                    ),
                                 )
                             },
                             Err(status) => (
@@ -390,16 +396,46 @@ impl Application for App {
                             ),
                         }
                     },
+                    GrpcConnection::Streaming((log, tail), client, connection) =>
+                        match log {
+                            Some(log) => match log {
+                                Ok(log) => (
+                                    Message::ServerAddLog(log),
+                                    GrpcConnection::Streaming(
+                                        tail.into_future().await,
+                                        client,
+                                        connection,
+                                    ),
+                                ),
+                                Err(status) => (
+                                    Message::ServerNoOp,
+                                    GrpcConnection::Error(
+                                        status,
+                                        client,
+                                        Some(connection),
+                                    ),
+                                ),
+                            },
+                            None => (
+                                Message::ServerNoOp,
+                                GrpcConnection::Registered(client, connection),
+                            ),
+                        },
                     GrpcConnection::Error(status, client, connection) => {
                         let code = status.code().clone();
                         let message = status.message().to_string();
 
                         match code {
-                            tonic::Code::Ok | tonic::Code::ResourceExhausted => {
-                                tokio::time::sleep(Duration::new(5, 0)).await;
+                            tonic::Code::Ok | tonic::Code::ResourceExhausted
+                                if connection.is_some() =>
+                            {
+                                // tokio::time::sleep(Duration::new(5, 0)).await;
                                 (
                                     Message::ServerNoOp,
-                                    GrpcConnection::Connected(client, connection),
+                                    GrpcConnection::Registered(
+                                        client,
+                                        connection.unwrap(),
+                                    ),
                                 )
                             },
                             _ => (

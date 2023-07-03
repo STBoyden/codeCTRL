@@ -1,9 +1,14 @@
-use codectrl_protobuf_bindings::data::Log;
+mod log_item;
 
 use crate::{view::View, Message};
-
-use iced::{widget::text, Command};
+use codectrl_protobuf_bindings::data::Log;
+use iced::{
+    widget::{column, container, row, scrollable, text},
+    Command, Length,
+};
 use std::fmt;
+
+use self::log_item::LogItem;
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub enum LogAppearanceState {
@@ -37,6 +42,7 @@ impl fmt::Display for LogAppearanceState {
 pub struct Main {
     pub scroll_to_selected_log: bool,
     pub log_appearance: LogAppearanceState,
+    pub logs: Vec<Log>,
 }
 
 impl View for Main {
@@ -56,10 +62,31 @@ impl View for Main {
                 self.log_appearance.toggle();
                 Command::none()
             },
-
+            ServerAddLog(log) => {
+                self.logs.push(log);
+                Command::none()
+            },
+            LogClicked(log) => Command::none(),
             _ => Command::none(),
         }
     }
 
-    fn view(&self) -> iced::Element<'_, Self::Message> { text("Main view").into() }
+    fn view(&self) -> iced::Element<'_, Self::Message> {
+        let log_items = self
+            .logs
+            .iter()
+            .cloned()
+            .map(|log| LogItem::new(log))
+            .collect::<Vec<_>>();
+
+        let mut elements = vec![text("Main view").into()];
+
+        for item in log_items {
+            elements.push(item.view());
+        }
+
+        let logs = scrollable(column(elements)).width(Length::Fill);
+
+        container(logs).into()
+    }
 }
