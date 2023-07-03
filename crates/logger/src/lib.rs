@@ -543,12 +543,12 @@ impl<'a> Logger<'a> {
                 {
                     let column_number = symbol.colno().unwrap_or_default();
 
-                    let mut file_path: String =
-                        if let Ok(path) = fs::canonicalize(file_name) {
-                            path.as_os_str().to_str().unwrap().to_string()
-                        } else {
-                            file_name.as_os_str().to_str().unwrap().to_string()
-                        };
+                    let file_path: String = if let Ok(path) = fs::canonicalize(file_name)
+                    {
+                        path.as_os_str().to_str().unwrap().to_string()
+                    } else {
+                        file_name.as_os_str().to_str().unwrap().to_string()
+                    };
 
                     #[cfg(target_os = "windows")]
                     {
@@ -556,12 +556,12 @@ impl<'a> Logger<'a> {
                     }
 
                     if !(name.contains("Logger::")
-                        || name.contains("codectrl::Logger")
+                        || name.contains("codectrl_logger::Logger")
                         || name.contains("LogBatch::")
-                        || name.contains("codectrl::LogBatch")
-                        || name == "codectrl"
+                        || name.contains("codectrl_logger::LogBatch")
+                        || name == "codectrl_logger"
                         || name.ends_with("create_log")
-                        || name.contains("codectrl::create_log")
+                        || name.contains("codectrl_logger::create_log")
                         || file_path.contains(".cargo")
                         || file_path.starts_with("/rustc/"))
                         && file_path.contains(".rs")
