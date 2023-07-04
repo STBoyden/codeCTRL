@@ -1,6 +1,6 @@
 [package]
 name = "codectrl"
-version = "1.0.2-beta.0"
+version = "1.0.3-beta.0"
 edition = "2021"
 authors = [
   "Samuel Boyden <sam@sboyden.com>",
@@ -15,7 +15,7 @@ members = [
 ]
 
 [workspace.package]
-version = "1.0.2-beta.0"
+version = "1.0.3-beta.0"
 edition = "2021"
 authors = [
   "Samuel Boyden <sam@sboyden.com>",
@@ -50,6 +50,9 @@ name = "codectrl"
 [dependencies]
 codectrl-gui = { path = "crates/gui" }
 codectrl-server = { path = "crates/server" }
+
+[profile.dev.package."*"]
+opt-level = 3
 
 [package.metadata.deb]
 name = "codectrl"
