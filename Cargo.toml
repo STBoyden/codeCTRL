@@ -8,8 +8,8 @@ authors = [
 
 [workspace]
 members = [
-  "crates/codectrl-gui",
-  "crates/codectrl-server",
+  "crates/gui",
+  "crates/server",
   "crates/protobuf-bindings",
   "crates/logger"
 ]
@@ -48,8 +48,8 @@ path = "crates/core/main.rs"
 name = "codectrl"
 
 [dependencies]
-codectrl-gui = { path = "crates/codectrl-gui" }
-codectrl-server = { path = "crates/codectrl-server" }
+codectrl-gui = { path = "crates/gui" }
+codectrl-server = { path = "crates/server" }
 
 [package.metadata.deb]
 name = "codectrl"

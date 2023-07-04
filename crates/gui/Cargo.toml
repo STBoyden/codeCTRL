@@ -14,7 +14,7 @@ anyhow = { workspace = true }
 async-stream = "0.3.5"
 chrono = { workspace = true }
 codectrl-protobuf-bindings = { workspace = true }
-codectrl-server = { path = "../codectrl-server" }
+codectrl-server = { path = "../server" }
 dark-light = "1.0.0"
 iced = { version = "0.9", features = ["tokio", "iced_glow", "default_system_font", "iced_wgpu", "system"] }
 iced_aw = { git = "https://github.com/iced-rs/iced_aw", version = "0.5.2" }
