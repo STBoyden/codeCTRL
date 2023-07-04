@@ -5,20 +5,20 @@ use log::{debug, info, trace};
 use parking_lot::Mutex;
 use serde_json::json;
 use std::{
-    fmt,
-    sync::{
-        atomic::{AtomicU16, Ordering},
-        Arc,
-    },
+	fmt,
+	sync::{
+		atomic::{AtomicU16, Ordering},
+		Arc,
+	},
 };
 use tokio::{
-    runtime::Handle,
-    sync::{
-        oneshot::{self, Sender as OneshotSender},
-        watch::{self, Receiver as WatchReceiver},
-    },
-    task::JoinHandle,
-    time::{sleep, Duration},
+	runtime::Handle,
+	sync::{
+		oneshot::{self, Sender as OneshotSender},
+		watch::{self, Receiver as WatchReceiver},
+	},
+	task::JoinHandle,
+	time::{sleep, Duration},
 };
 use warp::Filter;
 
@@ -26,104 +26,104 @@ use warp::Filter;
 
 #[derive(Debug, Clone, Copy)]
 enum OAuthProvider {
-    Unknown,
-    GitHub,
+	Unknown,
+	GitHub,
 }
 
 impl From<String> for OAuthProvider {
-    fn from(provider: String) -> Self {
-        match provider.to_lowercase().as_str() {
-            "github" => Self::GitHub,
-            _ => Self::Unknown,
-        }
-    }
+	fn from(provider: String) -> Self {
+		match provider.to_lowercase().as_str() {
+			"github" => Self::GitHub,
+			_ => Self::Unknown,
+		}
+	}
 }
 
 impl fmt::Display for OAuthProvider {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let provider = match self {
-            Self::GitHub => "github",
-            Self::Unknown => "unknown",
-        };
-        write!(f, "{provider}")
-    }
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		let provider = match self {
+			Self::GitHub => "github",
+			Self::Unknown => "unknown",
+		};
+		write!(f, "{provider}")
+	}
 }
 
 struct ThreadHandle<T: Send + Sync + 'static> {
-    is_closed_rx: Mutex<Option<WatchReceiver<bool>>>,
-    inner: Mutex<Option<JoinHandle<T>>>,
+	is_closed_rx: Mutex<Option<WatchReceiver<bool>>>,
+	inner: Mutex<Option<JoinHandle<T>>>,
 }
 
 impl<T: Send + Sync + 'static> ThreadHandle<T> {
-    pub fn none() -> Self {
-        Self {
-            inner: Mutex::new(None),
-            is_closed_rx: Mutex::new(None),
-        }
-    }
+	pub fn none() -> Self {
+		Self {
+			inner: Mutex::new(None),
+			is_closed_rx: Mutex::new(None),
+		}
+	}
 
-    pub fn init<F>(&self, handle: &Handle, is_closed_rx: WatchReceiver<bool>, f: F)
-    where
-        F: Future<Output = T> + Send + 'static,
-    {
-        *self.is_closed_rx.lock() = Some(is_closed_rx);
-        let mut lock = self.inner.lock();
+	pub fn init<F>(&self, handle: &Handle, is_closed_rx: WatchReceiver<bool>, f: F)
+	where
+		F: Future<Output = T> + Send + 'static,
+	{
+		*self.is_closed_rx.lock() = Some(is_closed_rx);
+		let mut lock = self.inner.lock();
 
-        if lock.is_none() {
-            info!(target: "codectrl_server - redirect handler", "Handle not spawned. Spawning now...");
-            *lock = Some(handle.spawn(f));
-        } else {
-            debug!(target: "codectrl_server - redirect handler", "Handle already spawned");
-        }
-    }
+		if lock.is_none() {
+			info!(target: "codectrl_server - redirect handler", "Handle not spawned. Spawning now...");
+			*lock = Some(handle.spawn(f));
+		} else {
+			debug!(target: "codectrl_server - redirect handler", "Handle already spawned");
+		}
+	}
 
-    pub fn is_started(&self) -> bool {
-        let lock = self.is_closed_rx.lock();
-        trace!(target: "codectrl_server - redirect handler", "Got is_closed_rx lock");
+	pub fn is_started(&self) -> bool {
+		let lock = self.is_closed_rx.lock();
+		trace!(target: "codectrl_server - redirect handler", "Got is_closed_rx lock");
 
-        if let Some(rx) = lock.as_ref() {
-            let val = *rx.borrow();
-            trace!(target: "codectrl_server - redirect handler", "is_closed_rx: {val}");
-            !val
-        } else {
-            false
-        }
-    }
+		if let Some(rx) = lock.as_ref() {
+			let val = *rx.borrow();
+			trace!(target: "codectrl_server - redirect handler", "is_closed_rx: {val}");
+			!val
+		} else {
+			false
+		}
+	}
 
-    pub fn close(&self, tx: OneshotSender<()>) {
-        let mut lock = self.inner.lock();
+	pub fn close(&self, tx: OneshotSender<()>) {
+		let mut lock = self.inner.lock();
 
-        if let Some(_handle) = lock.as_mut() {
-            let res = tx.send(());
+		if let Some(_handle) = lock.as_mut() {
+			let res = tx.send(());
 
-            trace!(target: "codectrl_server - redirect handler", "Result of signal send: {res:#?}");
-            debug!(target: "codectrl_server - redirect handler", "Sent shutdown signal...");
-        }
-    }
+			trace!(target: "codectrl_server - redirect handler", "Result of signal send: {res:#?}");
+			debug!(target: "codectrl_server - redirect handler", "Sent shutdown signal...");
+		}
+	}
 }
 
 pub struct RedirectHandler {
-    port: u16,
-    inner_handle: ThreadHandle<()>,
-    count: AtomicU16,
+	port: u16,
+	inner_handle: ThreadHandle<()>,
+	count: AtomicU16,
 }
 
 impl RedirectHandler {
-    #[must_use]
-    pub fn new(port: u16) -> Arc<Self> {
-        Arc::new(Self {
-            port,
-            inner_handle: ThreadHandle::none(),
-            count: AtomicU16::new(0),
-        })
-    }
+	#[must_use]
+	pub fn new(port: u16) -> Arc<Self> {
+		Arc::new(Self {
+			port,
+			inner_handle: ThreadHandle::none(),
+			count: AtomicU16::new(0),
+		})
+	}
 
-    pub fn start(self: &Arc<Self>, runtime_handle: Handle) {
-        let arc_self = Arc::clone(self);
+	pub fn start(self: &Arc<Self>, runtime_handle: Handle) {
+		let arc_self = Arc::clone(self);
 
-        let (is_closed_sender, is_closed_receiver) = watch::channel(false);
+		let (is_closed_sender, is_closed_receiver) = watch::channel(false);
 
-        self.inner_handle.init(&runtime_handle.clone(), is_closed_receiver, async move {
+		self.inner_handle.init(&runtime_handle.clone(), is_closed_receiver, async move {
             let arc_self_clone = Arc::clone(&arc_self);
             let (close_signal_sender, close_signal_receiver) = oneshot::channel();
 
@@ -161,22 +161,22 @@ impl RedirectHandler {
             server.await;
         });
 
-        loop {
-            if self.is_started() {
-                break;
-            }
-        }
-    }
+		loop {
+			if self.is_started() {
+				break;
+			}
+		}
+	}
 
-    pub fn register(&self) { _ = self.count.fetch_add(1, Ordering::SeqCst); }
+	pub fn register(&self) { _ = self.count.fetch_add(1, Ordering::SeqCst); }
 
-    pub fn unregister(&self) {
-        if self.count.load(Ordering::SeqCst) > 0 {
-            self.count.fetch_sub(1, Ordering::SeqCst);
-        }
-    }
+	pub fn unregister(&self) {
+		if self.count.load(Ordering::SeqCst) > 0 {
+			self.count.fetch_sub(1, Ordering::SeqCst);
+		}
+	}
 
-    pub fn is_started(&self) -> bool { self.inner_handle.is_started() }
+	pub fn is_started(&self) -> bool { self.inner_handle.is_started() }
 
-    fn close(&self, tx: OneshotSender<()>) { self.inner_handle.close(tx); }
+	fn close(&self, tx: OneshotSender<()>) { self.inner_handle.close(tx); }
 }

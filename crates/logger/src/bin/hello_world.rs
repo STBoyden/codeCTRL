@@ -1,11 +1,9 @@
 use codectrl_logger::{Logger, LoggerError};
 
 fn main() -> anyhow::Result<()> {
-    fn inner() -> Result<(), LoggerError> {
-        Logger::log("Hello, world!", None, None, None, None)
-    }
+	fn inner() -> Result<(), LoggerError> { Logger::log("Hello, world!", None, None, None, None) }
 
-    inner()?;
+	inner()?;
 
-    Ok(())
+	Ok(())
 }

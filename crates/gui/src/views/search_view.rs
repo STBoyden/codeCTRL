@@ -4,44 +4,43 @@ use iced::{widget::text, Command, Element};
 
 #[derive(Debug, Clone, Default)]
 pub struct Searching {
-    pub filter: String,
-    pub case_sensitive: bool,
-    pub regex_sensitive: bool,
+	pub filter: String,
+	pub case_sensitive: bool,
+	pub regex_sensitive: bool,
 }
 
 impl View for Searching {
-    type Message = Message;
+	type Message = Message;
 
-    fn title(&self) -> String { String::from("Searching logs...") }
+	fn title(&self) -> String { String::from("Searching logs...") }
 
-    fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
-        use Message::*;
+	fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
+		use Message::*;
 
-        match message {
-            FilterTextChanged(text) => {
-                self.filter = text;
+		match message {
+			FilterTextChanged(text) => {
+				self.filter = text;
 
-                if self.filter.is_empty() {
-                    return self.send_message(Message::UpdateViewState(ViewState::Main));
-                }
+				if self.filter.is_empty() {
+					return self.send_message(Message::UpdateViewState(ViewState::Main));
+				}
 
-                self.send_message(Message::UpdateViewState(ViewState::Searching))
-            },
-            ClearFilterText =>
-                self.send_message(Message::FilterTextChanged(String::new())),
-            FilterCaseSenitivityChanged(state) => {
-                self.case_sensitive = state;
-                Command::none()
-            },
-            FilterRegexChanged(state) => {
-                self.regex_sensitive = state;
-                Command::none()
-            },
-            _ => Command::none(),
-        }
-    }
+				self.send_message(Message::UpdateViewState(ViewState::Searching))
+			},
+			ClearFilterText => self.send_message(Message::FilterTextChanged(String::new())),
+			FilterCaseSenitivityChanged(state) => {
+				self.case_sensitive = state;
+				Command::none()
+			},
+			FilterRegexChanged(state) => {
+				self.regex_sensitive = state;
+				Command::none()
+			},
+			_ => Command::none(),
+		}
+	}
 
-    fn view(&self) -> Element<'_, Self::Message> {
-        text(format!("Searching view: {}", self.filter)).into()
-    }
+	fn view(&self) -> Element<'_, Self::Message> {
+		text(format!("Searching view: {}", self.filter)).into()
+	}
 }
