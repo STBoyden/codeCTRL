@@ -31,6 +31,7 @@ use iced_aw::{
 use iced_native::futures::StreamExt;
 use parking_lot::Mutex;
 use std::{
+	borrow::Cow,
 	sync::Arc,
 	time::{Duration, Instant},
 };
@@ -60,9 +61,12 @@ pub enum GrpcConnection {
 #[derive(Debug, Clone)]
 pub enum Message {
 	// main view
-	ScrollToSelectedLogChanged(bool),
 	LogAppearanceStateChanged,
 	LogClicked(Log),
+	LogIndexChanged(Option<Cow<'static, str>>),
+	LogDetailsSplitResize(u16),
+	UpdateLogItems(Box<Self>),
+	LogDetailsSplitClose,
 
 	// searching view
 	FilterTextChanged(String),
@@ -73,6 +77,7 @@ pub enum Message {
 	// general
 	UpdateViewState(ViewState),
 	SplitResize(u16),
+	NoOp,
 	Quit,
 
 	// server-related
@@ -88,7 +93,6 @@ pub enum Message {
 	GetServerErrors(Arc<Mutex<mpsc::UnboundedReceiver<anyhow::Error>>>),
 	AddServerError(Option<Arc<anyhow::Error>>),
 	ServerAddLog(Log),
-	ServerNoOp,
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
@@ -191,10 +195,13 @@ impl Application for App {
 		use Message::*;
 
 		match message {
-			ScrollToSelectedLogChanged(_)
-			| LogAppearanceStateChanged
+			LogAppearanceStateChanged
 			| ServerAddLog(_)
-			| LogClicked(_) => self.main_view.update(message),
+			| LogClicked(_)
+			| LogDetailsSplitResize(_)
+			| LogIndexChanged(_)
+			| UpdateLogItems(_)
+			| LogDetailsSplitClose => self.main_view.update(message),
 
 			FilterTextChanged(_)
 			| ClearFilterText
@@ -315,7 +322,7 @@ impl Application for App {
 				dbg!(error);
 				Command::none()
 			},
-			ServerNoOp => Command::none(),
+			NoOp => Command::none(),
 			Quit => close(),
 		}
 	}
@@ -331,7 +338,7 @@ impl Application for App {
 					PauseState::Paused => {
 						tokio::time::sleep(Duration::new(1, 0)).await;
 
-						(Message::ServerNoOp, PauseState::InProgress)
+						(Message::NoOp, PauseState::InProgress)
 					},
 					PauseState::InProgress => (Message::ShowServerErrors, PauseState::Paused),
 				}
@@ -352,10 +359,7 @@ impl Application for App {
 							}
 						};
 
-						(
-							Message::ServerNoOp,
-							GrpcConnection::Connected(grpc_client, None),
-						)
+						(Message::NoOp, GrpcConnection::Connected(grpc_client, None))
 					},
 					GrpcConnection::Connected(mut client, connection) => {
 						if let Some(connection) = connection {
@@ -369,7 +373,7 @@ impl Application for App {
 										RequestStatus::Error => todo!(),
 									},
 								Err(status) => (
-									Message::ServerNoOp,
+									Message::NoOp,
 									GrpcConnection::Error(status, client, Some(connection)),
 								),
 							}
@@ -380,7 +384,7 @@ impl Application for App {
 									GrpcConnection::FetchingDetails(client, response.into_inner()),
 								),
 								Err(status) => (
-									Message::ServerNoOp,
+									Message::NoOp,
 									GrpcConnection::Error(status, client, connection),
 								),
 							}
@@ -437,7 +441,7 @@ impl Application for App {
 							tonic::Code::Ok | tonic::Code::ResourceExhausted if connection.is_some() => {
 								// tokio::time::sleep(Duration::new(5, 0)).await;
 								(
-									Message::ServerNoOp,
+									Message::NoOp,
 									GrpcConnection::Registered(client, connection.unwrap()),
 								)
 							},
@@ -493,11 +497,6 @@ impl Application for App {
 					Message::FilterRegexChanged
 				),
 				Rule::horizontal(1.0),
-				checkbox(
-					"Scroll to selected log",
-					self.main_view.scroll_to_selected_log,
-					Message::ScrollToSelectedLogChanged
-				),
 				row![
 					text("Sort logs by: "),
 					button(text(&self.main_view.log_appearance)).on_press(Message::LogAppearanceStateChanged)
@@ -522,8 +521,7 @@ impl Application for App {
 						ViewState::Main => self.main_view.view(),
 						ViewState::Searching => self.searching_view.view(),
 					})
-					.width(Length::Fill)
-					.padding(10.0),
+					.width(Length::Fill),
 					self.split_size,
 					Axis::Vertical,
 					Message::SplitResize

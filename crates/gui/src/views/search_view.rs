@@ -1,6 +1,9 @@
 use crate::{view::View, Message, ViewState};
 
-use iced::{widget::text, Command, Element};
+use iced::{
+	widget::{container, text},
+	Command, Element,
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct Searching {
@@ -41,6 +44,8 @@ impl View for Searching {
 	}
 
 	fn view(&self) -> Element<'_, Self::Message> {
-		text(format!("Searching view: {}", self.filter)).into()
+		container(text(format!("Searching view: {}", self.filter)))
+			.padding(10.0)
+			.into()
 	}
 }
