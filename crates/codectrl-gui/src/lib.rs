@@ -10,7 +10,9 @@ use crate::view::View;
 use anyhow::Error;
 use codectrl_protobuf_bindings::{
     data::Log,
-    logs_service::{log_server_client::LogServerClient, Connection, RequestStatus},
+    logs_service::{
+        log_server_client::LogServerClient, Connection, RequestStatus, ServerDetails,
+    },
 };
 use codectrl_server::{self, ServerResult};
 use dark_light::{self, Mode as ThemeMode};
@@ -30,9 +32,12 @@ use iced_aw::{
 };
 use iced_native::futures::StreamExt;
 use parking_lot::Mutex;
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
 use tokio::sync::mpsc;
-use tonic::{transport::Channel, Status, Streaming};
+use tonic::{transport::Channel, Response, Status, Streaming};
 
 pub enum PauseState {
     Paused,
@@ -44,6 +49,7 @@ type Client = LogServerClient<Channel>;
 pub enum GrpcConnection {
     NotConnected(String, u32),
     Connected(Client, Option<Connection>),
+    FetchingDetails(Client, Connection),
     Registered(Client, Connection),
     Streaming(
         (Option<Result<Log, Status>>, Streaming<Log>),
@@ -73,7 +79,8 @@ pub enum Message {
         server_result: Arc<ServerResult>,
         details: (String, u32),
     },
-    ServerConnection(String, u32),
+    GetConnectionDetails(Client, Option<ServerDetails>),
+    SetConnectionDetails(Arc<Option<Response<ServerDetails>>>),
     ShowServerErrors,
     ShowServerError(Arc<anyhow::Error>),
     SetServerErrorChannel(Arc<mpsc::UnboundedReceiver<anyhow::Error>>),
@@ -123,6 +130,8 @@ pub struct App {
     server_errors: Vec<Arc<anyhow::Error>>,
     host: String,
     port: u32,
+    uptime: Duration,
+    last_updated: Instant,
 
     // splits
     split_size: Option<u16>,
@@ -142,6 +151,8 @@ impl App {
         Self {
             host: flags.host,
             port: flags.port,
+            uptime: Duration::ZERO,
+            last_updated: Instant::now(),
             server_errors: vec![],
             server_errors_channel: None,
             split_size: Some(208),
@@ -208,14 +219,14 @@ impl Application for App {
                 server_result,
                 details: (host, port),
             } => match Arc::try_unwrap(server_result) {
-                Ok(x) if matches!(x, Ok(_)) => {
+                Ok(x) if x.is_ok() => {
                     let channel = x.unwrap();
                     self.host = host;
                     self.port = port;
 
                     self.send_message(SetServerErrorChannel(Arc::new(channel)))
                 },
-                Ok(x) if matches!(x, Err(_)) => {
+                Ok(x) if x.is_err() => {
                     let error = x.unwrap_err();
 
                     self.send_message(AddServerError(Some(Arc::new(error))))
@@ -255,9 +266,31 @@ impl Application for App {
 
                 self.send_message(ShowServerErrors)
             },
-            ServerConnection(host, port) => {
-                dbg!(&host);
-                dbg!(&port);
+            GetConnectionDetails(mut client, details) => match details {
+                Some(details) => self.send_message(SetConnectionDetails(Arc::new(Some(
+                    Response::new(details),
+                )))),
+                None if Instant::now().duration_since(self.last_updated).as_secs()
+                    >= 1 =>
+                    Command::perform(
+                        async move { Arc::new(client.get_server_details(()).await.ok()) },
+                        SetConnectionDetails,
+                    ),
+                None => Command::none(),
+            },
+            SetConnectionDetails(details) => {
+                if let Some(details) = details.as_ref() {
+                    let details = details.get_ref();
+
+                    self.host = details.host.clone();
+                    self.port = details.port;
+
+                    if details.uptime != self.uptime.as_secs() {
+                        self.uptime = Duration::new(details.uptime, 0);
+                    }
+
+                    self.last_updated = Instant::now();
+                }
 
                 Command::none()
             },
@@ -346,8 +379,13 @@ impl Application for App {
                                 .unwrap()
                                 {
                                     RequestStatus::Confirmed => (
-                                        Message::ServerNoOp,
-                                        GrpcConnection::Registered(client, connection),
+                                        Message::GetConnectionDetails(
+                                            client.clone(),
+                                            None,
+                                        ),
+                                        GrpcConnection::FetchingDetails(
+                                            client, connection,
+                                        ),
                                     ),
                                     RequestStatus::Error => todo!(),
                                 },
@@ -363,8 +401,8 @@ impl Application for App {
                         } else {
                             match client.register_client(()).await {
                                 Ok(response) => (
-                                    Message::ServerNoOp,
-                                    GrpcConnection::Registered(
+                                    Message::GetConnectionDetails(client.clone(), None),
+                                    GrpcConnection::FetchingDetails(
                                         client,
                                         response.into_inner(),
                                     ),
@@ -376,13 +414,27 @@ impl Application for App {
                             }
                         }
                     },
+                    GrpcConnection::FetchingDetails(mut client, connection) =>
+                        match client.get_server_details(()).await {
+                            Ok(details) => (
+                                Message::GetConnectionDetails(
+                                    client.clone(),
+                                    Some(details.into_inner()),
+                                ),
+                                GrpcConnection::Registered(client, connection),
+                            ),
+                            Err(status) => (
+                                Message::GetConnectionDetails(client.clone(), None),
+                                GrpcConnection::Error(status, client, Some(connection)),
+                            ),
+                        },
                     GrpcConnection::Registered(mut client, connection) => {
                         match client.get_logs(connection.clone()).await {
                             Ok(res) => {
                                 let stream = res.into_inner();
 
                                 (
-                                    Message::ServerNoOp,
+                                    Message::GetConnectionDetails(client.clone(), None),
                                     GrpcConnection::Streaming(
                                         stream.into_future().await,
                                         client,
@@ -391,7 +443,7 @@ impl Application for App {
                                 )
                             },
                             Err(status) => (
-                                Message::ServerNoOp,
+                                Message::GetConnectionDetails(client.clone(), None),
                                 GrpcConnection::Error(status, client, Some(connection)),
                             ),
                         }
@@ -408,7 +460,7 @@ impl Application for App {
                                     ),
                                 ),
                                 Err(status) => (
-                                    Message::ServerNoOp,
+                                    Message::GetConnectionDetails(client.clone(), None),
                                     GrpcConnection::Error(
                                         status,
                                         client,
@@ -417,7 +469,7 @@ impl Application for App {
                                 ),
                             },
                             None => (
-                                Message::ServerNoOp,
+                                Message::GetConnectionDetails(client.clone(), None),
                                 GrpcConnection::Registered(client, connection),
                             ),
                         },
@@ -503,7 +555,10 @@ impl Application for App {
                     button(text(&self.main_view.log_appearance))
                         .on_press(Message::LogAppearanceStateChanged)
                 ]
-                .align_items(Alignment::Center)
+                .align_items(Alignment::Center),
+                Rule::horizontal(1.0),
+                text(format!("Server address: {}:{}", self.host, self.port)),
+                text(format!("Server uptime: {}s", self.uptime.as_secs())),
             ]
             .align_items(Alignment::Start)
             .spacing(4.0)

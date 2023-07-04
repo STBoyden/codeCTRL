@@ -24,5 +24,5 @@ tonic = { workspace = true }
 [dev-dependencies]
 anyhow = "1.0"
 tokio = { workspace = true }
-chrono = "0.4"
+chrono = { workspace = true }
 rand = "0.8"
