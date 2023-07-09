@@ -1,3 +1,4 @@
+LABEL org.opencontainers.image.source https://github.com/STBoyden/codectrl
 FROM ubuntu:latest
 
 COPY bootstrap-action.sh /bootstrap-action.sh

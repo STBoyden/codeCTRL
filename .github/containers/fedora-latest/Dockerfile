@@ -1,3 +1,4 @@
+LABEL org.opencontainers.image.source https://github.com/STBoyden/codectrl
 FROM fedora:latest
 
 COPY dnf.conf /etc/dnf/dnf.conf
