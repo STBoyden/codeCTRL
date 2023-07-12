@@ -6,16 +6,27 @@ on:
     - cron: "0 */2 * * */1"
 
 jobs:
-  build-debian-latest:
+  build-containers:
     if: github.repository_owner == 'STBoyden'
-    name: Build and push Debian latest container
+    strategy:
+      matrix:
+        os:
+          - debian-latest
+          - debian-sid
+          - fedora-latest
+          - fedora-rawhide
+          - rhel-7
+          - rhel-8
+          - rhel-latest
+          - ubuntu-20-04
+          - ubuntu-latest
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
 
       - uses: satackey/action-docker-layer-caching@v0.0.11
         with:
-          key: debian-latest-{hash}
+          key: ${{ matrix.os }}-{hash}
         continue-on-error: true
 
       - name: Login to GitHub Container Registry
@@ -23,265 +34,294 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ github.token }}
 
-      - name: Build and push
+      - name: Build and push for ${{ matrix.os }}
         uses: docker/build-push-action@v3
         with:
-          context: ./.github/containers/debian-latest
+          context: ./.github/containers/${{ matrix.os }}
           platforms: linux/amd64
           push: true
           tags: |
-            ghcr.io/stboyden/codectrl-pkg/debian-latest:latest
+            ghcr.io/stboyden/codectrl-pkg/${{ matrix.os }}:latest
 
-  build-debian-10:
-    if: github.repository_owner == 'STBoyden'
-    name: Build and push Debian 10 container
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: satackey/action-docker-layer-caching@v0.0.11
-        with:
-          key: debian-10-{hash}
-        continue-on-error: true
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v3
-        with:
-          context: ./.github/containers/debian-10
-          platforms: linux/amd64
-          push: true
-          tags: |
-            ghcr.io/stboyden/codectrl-pkg/debian-10:latest
-
-  build-debian-sid:
-    if: github.repository_owner == 'STBoyden'
-    name: Build and push Debian Sid container
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: satackey/action-docker-layer-caching@v0.0.11
-        with:
-          key: debian-sid-{hash}
-        continue-on-error: true
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v3
-        with:
-          context: ./.github/containers/debian-sid
-          platforms: linux/amd64
-          push: true
-          tags: |
-            ghcr.io/stboyden/codectrl-pkg/debian-sid:latest
-
-  build-ubuntu-latest:
-    if: github.repository_owner == 'STBoyden'
-    name: Build and push Ubuntu latest container
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: satackey/action-docker-layer-caching@v0.0.11
-        with:
-          key: ubuntu-latest-{hash}
-        continue-on-error: true
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v3
-        with:
-          context: ./.github/containers/ubuntu-latest
-          platforms: linux/amd64
-          push: true
-          tags: |
-            ghcr.io/stboyden/codectrl-pkg/ubuntu-latest:latest
-
-  build-ubuntu-20-04:
-    if: github.repository_owner == 'STBoyden'
-    name: Build and push Ubuntu 20.04 container
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: satackey/action-docker-layer-caching@v0.0.11
-        with:
-          key: ubuntu-20-04-{hash}
-        continue-on-error: true
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v3
-        with:
-          context: ./.github/containers/ubuntu-20-04
-          platforms: linux/amd64
-          push: true
-          tags: |
-            ghcr.io/stboyden/codectrl-pkg/ubuntu-20-04:latest
-
-  build-fedora-latest:
-    if: github.repository_owner == 'STBoyden'
-    name: Build and push latest Fedora container
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: satackey/action-docker-layer-caching@v0.0.11
-        with:
-          key: fedora-latest-{hash}
-        continue-on-error: true
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v3
-        with:
-          context: ./.github/containers/fedora-latest
-          platforms: linux/amd64
-          push: true
-          tags: |
-            ghcr.io/stboyden/codectrl-pkg/fedora-latest:latest
-
-  build-fedora-rawhide:
-    if: github.repository_owner == 'STBoyden'
-    name: Build and push Fedora Rawhide container
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: satackey/action-docker-layer-caching@v0.0.11
-        with:
-          key: fedora-rawhide-{hash}
-        continue-on-error: true
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v3
-        with:
-          context: ./.github/containers/fedora-rawhide
-          platforms: linux/amd64
-          push: true
-          tags: |
-            ghcr.io/stboyden/codectrl-pkg/fedora-rawhide:latest
-
-  build-rhel-latest:
-    if: github.repository_owner == 'STBoyden'
-    name: Build and push latest RHEL container
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: satackey/action-docker-layer-caching@v0.0.11
-        with:
-          key: rhel-latest-{hash}
-        continue-on-error: true
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v3
-        with:
-          context: ./.github/containers/rhel-latest
-          platforms: linux/amd64
-          push: true
-          tags: |
-            ghcr.io/stboyden/codectrl-pkg/rhel-latest:latest
-
-  build-rhel-8:
-    if: github.repository_owner == 'STBoyden'
-    name: Build and push RHEL 8 container
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: satackey/action-docker-layer-caching@v0.0.11
-        with:
-          key: rhel-8-{hash}
-        continue-on-error: true
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v3
-        with:
-          context: ./.github/containers/rhel-8
-          platforms: linux/amd64
-          push: true
-          tags: |
-            ghcr.io/stboyden/codectrl-pkg/rhel-8:latest
-
-  build-rhel-7:
-    if: github.repository_owner == 'STBoyden'
-    name: Build and push RHEL 7 container
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: satackey/action-docker-layer-caching@v0.0.11
-        with:
-          key: rhel-7-{hash}
-        continue-on-error: true
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v3
-        with:
-          context: ./.github/containers/rhel-7
-          platforms: linux/amd64
-          push: true
-          tags: |
-            ghcr.io/stboyden/codectrl-pkg/rhel-7:latest
+# jobs:
+#   build-debian-latest:
+#     if: github.repository_owner == 'STBoyden'
+#     name: Build and push Debian latest container
+#     runs-on: ubuntu-22.04
+#     steps:
+#       - uses: actions/checkout@v3
+#
+#       - uses: satackey/action-docker-layer-caching@v0.0.11
+#         with:
+#           key: debian-latest-{hash}
+#         continue-on-error: true
+#
+#       - name: Login to GitHub Container Registry
+#         uses: docker/login-action@v2
+#         with:
+#           registry: ghcr.io
+#           username: ${{ github.repository_owner }}
+#           password: ${{ secrets.GITHUB_TOKEN }}
+#
+#       - name: Build and push
+#         uses: docker/build-push-action@v3
+#         with:
+#           context: ./.github/containers/debian-latest
+#           platforms: linux/amd64
+#           push: true
+#           tags: |
+#             ghcr.io/stboyden/codectrl-pkg/debian-latest:latest
+#
+#   build-debian-10:
+#     if: github.repository_owner == 'STBoyden'
+#     name: Build and push Debian 10 container
+#     runs-on: ubuntu-22.04
+#     steps:
+#       - uses: actions/checkout@v3
+#
+#       - uses: satackey/action-docker-layer-caching@v0.0.11
+#         with:
+#           key: debian-10-{hash}
+#         continue-on-error: true
+#
+#       - name: Login to GitHub Container Registry
+#         uses: docker/login-action@v2
+#         with:
+#           registry: ghcr.io
+#           username: ${{ github.repository_owner }}
+#           password: ${{ secrets.GITHUB_TOKEN }}
+#
+#       - name: Build and push
+#         uses: docker/build-push-action@v3
+#         with:
+#           context: ./.github/containers/debian-10
+#           platforms: linux/amd64
+#           push: true
+#           tags: |
+#             ghcr.io/stboyden/codectrl-pkg/debian-10:latest
+#
+#   build-debian-sid:
+#     if: github.repository_owner == 'STBoyden'
+#     name: Build and push Debian Sid container
+#     runs-on: ubuntu-22.04
+#     steps:
+#       - uses: actions/checkout@v3
+#
+#       - uses: satackey/action-docker-layer-caching@v0.0.11
+#         with:
+#           key: debian-sid-{hash}
+#         continue-on-error: true
+#
+#       - name: Login to GitHub Container Registry
+#         uses: docker/login-action@v2
+#         with:
+#           registry: ghcr.io
+#           username: ${{ github.repository_owner }}
+#           password: ${{ secrets.GITHUB_TOKEN }}
+#
+#       - name: Build and push
+#         uses: docker/build-push-action@v3
+#         with:
+#           context: ./.github/containers/debian-sid
+#           platforms: linux/amd64
+#           push: true
+#           tags: |
+#             ghcr.io/stboyden/codectrl-pkg/debian-sid:latest
+#
+#   build-ubuntu-latest:
+#     if: github.repository_owner == 'STBoyden'
+#     name: Build and push Ubuntu latest container
+#     runs-on: ubuntu-22.04
+#     steps:
+#       - uses: actions/checkout@v3
+#
+#       - uses: satackey/action-docker-layer-caching@v0.0.11
+#         with:
+#           key: ubuntu-latest-{hash}
+#         continue-on-error: true
+#
+#       - name: Login to GitHub Container Registry
+#         uses: docker/login-action@v2
+#         with:
+#           registry: ghcr.io
+#           username: ${{ github.repository_owner }}
+#           password: ${{ secrets.GITHUB_TOKEN }}
+#
+#       - name: Build and push
+#         uses: docker/build-push-action@v3
+#         with:
+#           context: ./.github/containers/ubuntu-latest
+#           platforms: linux/amd64
+#           push: true
+#           tags: |
+#             ghcr.io/stboyden/codectrl-pkg/ubuntu-latest:latest
+#
+#   build-ubuntu-20-04:
+#     if: github.repository_owner == 'STBoyden'
+#     name: Build and push Ubuntu 20.04 container
+#     runs-on: ubuntu-22.04
+#     steps:
+#       - uses: actions/checkout@v3
+#
+#       - uses: satackey/action-docker-layer-caching@v0.0.11
+#         with:
+#           key: ubuntu-20-04-{hash}
+#         continue-on-error: true
+#
+#       - name: Login to GitHub Container Registry
+#         uses: docker/login-action@v2
+#         with:
+#           registry: ghcr.io
+#           username: ${{ github.repository_owner }}
+#           password: ${{ secrets.GITHUB_TOKEN }}
+#
+#       - name: Build and push
+#         uses: docker/build-push-action@v3
+#         with:
+#           context: ./.github/containers/ubuntu-20-04
+#           platforms: linux/amd64
+#           push: true
+#           tags: |
+#             ghcr.io/stboyden/codectrl-pkg/ubuntu-20-04:latest
+#
+#   build-fedora-latest:
+#     if: github.repository_owner == 'STBoyden'
+#     name: Build and push latest Fedora container
+#     runs-on: ubuntu-22.04
+#     steps:
+#       - uses: actions/checkout@v3
+#
+#       - uses: satackey/action-docker-layer-caching@v0.0.11
+#         with:
+#           key: fedora-latest-{hash}
+#         continue-on-error: true
+#
+#       - name: Login to GitHub Container Registry
+#         uses: docker/login-action@v2
+#         with:
+#           registry: ghcr.io
+#           username: ${{ github.repository_owner }}
+#           password: ${{ secrets.GITHUB_TOKEN }}
+#
+#       - name: Build and push
+#         uses: docker/build-push-action@v3
+#         with:
+#           context: ./.github/containers/fedora-latest
+#           platforms: linux/amd64
+#           push: true
+#           tags: |
+#             ghcr.io/stboyden/codectrl-pkg/fedora-latest:latest
+#
+#   build-fedora-rawhide:
+#     if: github.repository_owner == 'STBoyden'
+#     name: Build and push Fedora Rawhide container
+#     runs-on: ubuntu-22.04
+#     steps:
+#       - uses: actions/checkout@v3
+#
+#       - uses: satackey/action-docker-layer-caching@v0.0.11
+#         with:
+#           key: fedora-rawhide-{hash}
+#         continue-on-error: true
+#
+#       - name: Login to GitHub Container Registry
+#         uses: docker/login-action@v2
+#         with:
+#           registry: ghcr.io
+#           username: ${{ github.repository_owner }}
+#           password: ${{ secrets.GITHUB_TOKEN }}
+#
+#       - name: Build and push
+#         uses: docker/build-push-action@v3
+#         with:
+#           context: ./.github/containers/fedora-rawhide
+#           platforms: linux/amd64
+#           push: true
+#           tags: |
+#             ghcr.io/stboyden/codectrl-pkg/fedora-rawhide:latest
+#
+#   build-rhel-latest:
+#     if: github.repository_owner == 'STBoyden'
+#     name: Build and push latest RHEL container
+#     runs-on: ubuntu-22.04
+#     steps:
+#       - uses: actions/checkout@v3
+#
+#       - uses: satackey/action-docker-layer-caching@v0.0.11
+#         with:
+#           key: rhel-latest-{hash}
+#         continue-on-error: true
+#
+#       - name: Login to GitHub Container Registry
+#         uses: docker/login-action@v2
+#         with:
+#           registry: ghcr.io
+#           username: ${{ github.repository_owner }}
+#           password: ${{ secrets.GITHUB_TOKEN }}
+#
+#       - name: Build and push
+#         uses: docker/build-push-action@v3
+#         with:
+#           context: ./.github/containers/rhel-latest
+#           platforms: linux/amd64
+#           push: true
+#           tags: |
+#             ghcr.io/stboyden/codectrl-pkg/rhel-latest:latest
+#
+#   build-rhel-8:
+#     if: github.repository_owner == 'STBoyden'
+#     name: Build and push RHEL 8 container
+#     runs-on: ubuntu-22.04
+#     steps:
+#       - uses: actions/checkout@v3
+#
+#       - uses: satackey/action-docker-layer-caching@v0.0.11
+#         with:
+#           key: rhel-8-{hash}
+#         continue-on-error: true
+#
+#       - name: Login to GitHub Container Registry
+#         uses: docker/login-action@v2
+#         with:
+#           registry: ghcr.io
+#           username: ${{ github.repository_owner }}
+#           password: ${{ secrets.GITHUB_TOKEN }}
+#
+#       - name: Build and push
+#         uses: docker/build-push-action@v3
+#         with:
+#           context: ./.github/containers/rhel-8
+#           platforms: linux/amd64
+#           push: true
+#           tags: |
+#             ghcr.io/stboyden/codectrl-pkg/rhel-8:latest
+#
+#   build-rhel-7:
+#     if: github.repository_owner == 'STBoyden'
+#     name: Build and push RHEL 7 container
+#     runs-on: ubuntu-22.04
+#     steps:
+#       - uses: actions/checkout@v3
+#
+#       - uses: satackey/action-docker-layer-caching@v0.0.11
+#         with:
+#           key: rhel-7-{hash}
+#         continue-on-error: true
+#
+#       - name: Login to GitHub Container Registry
+#         uses: docker/login-action@v2
+#         with:
+#           registry: ghcr.io
+#           username: ${{ github.repository_owner }}
+#           password: ${{ secrets.GITHUB_TOKEN }}
+#
+#       - name: Build and push
+#         uses: docker/build-push-action@v3
+#         with:
+#           context: ./.github/containers/rhel-7
+#           platforms: linux/amd64
+#           push: true
+#           tags: |
+#             ghcr.io/stboyden/codectrl-pkg/rhel-7:latest
