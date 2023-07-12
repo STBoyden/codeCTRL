@@ -21,6 +21,8 @@ jobs:
           - ubuntu-20-04
           - ubuntu-latest
     runs-on: ubuntu-22.04
+    permissions:
+      packages: write
     steps:
       - uses: actions/checkout@v3
 
