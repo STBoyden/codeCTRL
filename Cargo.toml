@@ -89,4 +89,3 @@ doc = true
 [package.metadata.wix]
 name = "CodeCTRL"
 product-name = "CodeCTRL"
-version = "1.0.3"
