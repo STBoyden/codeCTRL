@@ -21,6 +21,8 @@ jobs:
           - ubuntu-20-04
           - ubuntu-latest
     runs-on: ubuntu-22.04
+    env:
+      DOCKER_BUILDKIT: 0
     steps:
       - uses: actions/checkout@v3
 
