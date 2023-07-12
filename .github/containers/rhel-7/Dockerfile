@@ -1,4 +1,3 @@
-LABEL org.opencontainers.image.source https://github.com/STBoyden/codectrl
 FROM centos:7
 
 COPY bootstrap-action.sh /bootstrap-action.sh

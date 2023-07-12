@@ -1,4 +1,3 @@
-LABEL org.opencontainers.image.source https://github.com/STBoyden/codectrl
 FROM debian:sid
 
 COPY os-release /etc/os-release
