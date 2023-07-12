@@ -5,526 +5,39 @@ on:
   pull_request:
 
 jobs:
-  build-debian-latest:
-    name: Build and Package for latest Debian release
+  fetch-sources:
     runs-on: ubuntu-latest
-    container: ghcr.io/authentura/codectrl-debian-latest
     steps:
       - uses: actions/checkout@v3
-
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: nightly-2022-11-05
-
-      - name: Fetch cache if already exists
-        continue-on-error: true
-        uses: actions/cache@v3
-        id: has-cache
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: debian-latest-${{ hashFiles('**/Cargo.lock') }}
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Install cargo-deb
-        continue-on-error: true
-        run: cargo install cargo-deb
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Build and package CodeCTRL
-        shell: bash
-        run: |
-          cargo deb
-
-      - name: Cache build
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: debian-latest-${{ hashFiles('**/Cargo.lock') }}
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Rename .deb
-        run: ./find-and-rename-pkg.sh
-
-      - name: Upload .deb artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: Debian Latest package
-          path: target/debian/*.deb
-
-  build-debian-10:
-    name: Build and Package for Debian 10
-    runs-on: ubuntu-latest
-    container: ghcr.io/authentura/codectrl-debian-10
-    steps:
       - uses: actions/checkout@v3
-
-      - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: nightly-2022-11-05
+          repository: STBoyden/codectrl-protobuf-specifications
+          path: crates/protobuf-bindings/protos
 
-      - name: Fetch cache if already exists
-        continue-on-error: true
-        uses: actions/cache@v3
-        id: has-cache
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: debian-10-${{ hashFiles('**/Cargo.lock') }}
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Install cargo-deb
-        continue-on-error: true
-        run: cargo install cargo-deb
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Build and package CodeCTRL
-        shell: bash
-        run: |
-          cargo deb
-
-      - name: Cache build
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: debian-10-${{ hashFiles('**/Cargo.lock') }}
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Rename .deb
-        run: ./find-and-rename-pkg.sh
-
-      - name: Upload .deb artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: Debian 10 package
-          path: target/debian/*.deb
-
-  build-debian-sid:
-    name: Build and Package for Debian Sid
+  build-linux:
+    name: Build for Linux
+    needs: [fetch-sources]
+    strategy:
+      matrix:
+        os:
+          - debian-latest
+          - debian-sid
+          - fedora-latest
+          - fedora-rawhide
+          - rhel-7
+          - rhel-8
+          - rhel-latest
+          - ubuntu-20-04
+          - ubuntu-latest
     runs-on: ubuntu-latest
-    container: ghcr.io/authentura/codectrl-debian-sid
+    container: ghcr.io/stboyden/codectrl-pkg/${{ matrix.os }}:latest
     steps:
-      - uses: actions/checkout@v3
-
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: nightly-2022-11-05
-
-      - name: Fetch cache if already exists
-        continue-on-error: true
-        uses: actions/cache@v3
-        id: has-cache
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: debian-sid-${{ hashFiles('**/Cargo.lock') }}
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Install cargo-deb
-        continue-on-error: true
-        run: cargo install cargo-deb
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Build and package CodeCTRL
-        shell: bash
-        run: |
-          cargo deb
-
-      - name: Cache build
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: debian-sid-${{ hashFiles('**/Cargo.lock') }}
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Rename .deb
-        run: ./find-and-rename-pkg.sh
-
-      - name: Upload .deb artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: Debian Sid package
-          path: target/debian/*.deb
-
-  build-ubuntu-lts:
-    name: Build and Package for latest Ubuntu LTS
-    runs-on: ubuntu-latest
-    container: ghcr.io/authentura/codectrl-ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: nightly-2022-11-05
-
-      - name: Fetch cache if already exists
-        continue-on-error: true
-        uses: actions/cache@v3
-        id: has-cache
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ubuntu-latest-${{ hashFiles('**/Cargo.lock') }}
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Install cargo-deb
-        continue-on-error: true
-        run: cargo install cargo-deb
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Build and package CodeCTRL
-        shell: bash
-        run: |
-          cargo deb
-
-      - name: Cache build
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ubuntu-latest-${{ hashFiles('**/Cargo.lock') }}
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Rename .deb
-        run: ./find-and-rename-pkg.sh
-
-      - name: Upload .deb artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: Ubuntu Latest LTS package
-          path: target/debian/*.deb
-
-  build-ubuntu-20-04:
-    name: Build and Package for Ubuntu 20.04 LTS
-    runs-on: ubuntu-latest
-    container: ghcr.io/authentura/codectrl-ubuntu-20-04
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: nightly-2022-11-05
-
-      - name: Fetch cache if already exists
-        continue-on-error: true
-        uses: actions/cache@v3
-        id: has-cache
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ubuntu-20-04-${{ hashFiles('**/Cargo.lock') }}
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Install cargo-deb
-        continue-on-error: true
-        run: cargo install cargo-deb
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Build and package CodeCTRL
-        shell: bash
-        run: |
-          cargo deb
-
-      - name: Cache build
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ubuntu-20-04-${{ hashFiles('**/Cargo.lock') }}
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Rename .deb
-        run: ./find-and-rename-pkg.sh
-
-      - name: Upload .deb artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: Ubuntu 20.04 LTS package
-          path: target/debian/*.deb
-
-  build-fedora-latest:
-    name: Build and Package for latest stable Fedora
-    runs-on: ubuntu-latest
-    container: ghcr.io/authentura/codectrl-fedora-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: nightly-2022-11-05
-
-      - name: Fetch cached build
-        uses: actions/cache@v3
-        id: has-cache
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: fedora-latest-${{ hashFiles('**/Cargo.lock') }}
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Install cargo-generate-rpm
-        continue-on-error: true
-        run: cargo install cargo-generate-rpm
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Build and package CodeCTRL
-        shell: bash
-        run: |
-          cargo build --release
-          strip -s target/release/codectrl
-          cargo generate-rpm
-
-      - name: Cache build
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: fedora-latest-${{ hashFiles('**/Cargo.lock') }}
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Rename .rpm
-        run: ./find-and-rename-pkg.sh
-
-      - name: Upload .rpm artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: Fedora Latest package
-          path: target/generate-rpm/*.rpm
-
-  build-fedora-rawhide:
-    name: Build and Package for Fedora Rawhide
-    runs-on: ubuntu-latest
-    container: ghcr.io/authentura/codectrl-fedora-rawhide
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: nightly-2022-11-05
-
-      - name: Fetch cached build
-        uses: actions/cache@v3
-        id: has-cache
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: fedora-rawhide-${{ hashFiles('**/Cargo.lock') }}
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Install cargo-generate-rpm
-        continue-on-error: true
-        run: cargo install cargo-generate-rpm
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Build and package CodeCTRL
-        shell: bash
-        run: |
-          cargo build --release
-          strip -s target/release/codectrl
-          cargo generate-rpm
-
-      - name: Cache build
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: fedora-rawhide-${{ hashFiles('**/Cargo.lock') }}
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Rename .rpm
-        run: ./find-and-rename-pkg.sh
-
-      - name: Upload .rpm artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: Fedora Rawhide package
-          path: target/generate-rpm/*.rpm
-
-  build-rhel-latest:
-    name: Build and Package for latest RHEL
-    runs-on: ubuntu-latest
-    container: ghcr.io/authentura/codectrl-rhel-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: nightly-2022-11-05
-
-      - name: Fetch cached build
-        uses: actions/cache@v3
-        id: has-cache
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: rhel-latest-${{ hashFiles('**/Cargo.lock') }}
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Install cargo-generate-rpm
-        continue-on-error: true
-        run: cargo install cargo-generate-rpm
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Build and package CodeCTRL
-        shell: bash
-        run: |
-          cargo build --release
-          strip -s target/release/codectrl
-          cargo generate-rpm
-
-      - name: Cache build
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: rhel-latest-${{ hashFiles('**/Cargo.lock') }}
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Rename .rpm
-        run: ./find-and-rename-pkg.sh
-
-      - name: Upload .rpm artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: RHEL Latest package
-          path: target/generate-rpm/*.rpm
-
-  build-rhel-8:
-    name: Build and Package for RHEL 8
-    runs-on: ubuntu-latest
-    container: ghcr.io/authentura/codectrl-rhel-8
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: nightly-2022-11-05
-
-      - name: Fetch cached build
-        uses: actions/cache@v3
-        id: has-cache
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: rhel-8-${{ hashFiles('**/Cargo.lock') }}
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Install cargo-generate-rpm
-        continue-on-error: true
-        run: cargo install cargo-generate-rpm
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Build and package CodeCTRL
-        shell: bash
-        run: |
-          cargo build --release
-          strip -s target/release/codectrl
-          cargo generate-rpm
-
-      - name: Cache build
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: rhel-8-${{ hashFiles('**/Cargo.lock') }}
-
-      - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Rename .rpm
-        run: ./find-and-rename-pkg.sh
-
-      - name: Upload .rpm artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: RHEL 8 package
-          path: target/generate-rpm/*.rpm
-
-  build-rhel-7:
-    name: Build and Package for RHEL 7
-    runs-on: ubuntu-latest
-    container: ghcr.io/authentura/codectrl-rhel-7
-    steps:
-      - uses: actions/checkout@v3
-
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-2022-11-05
+          toolchain: nightly
 
-      - name: Fetch cached build
+      - name: Fetch cache if already exists
+        continue-on-error: true
         uses: actions/cache@v3
         id: has-cache
         with:
@@ -534,48 +47,55 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: rhel-7-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ matrix.os }}-${{ hashFiles('**/Cargo.lock') }}
 
-      - if: steps.has-cache.outputs.cache-hit != 'true'
+      - if: steps.has-cache.outputs.cache-hit != 'true' && (contains(matrix.os, 'ubuntu') || contains(matrix.os, 'debian'))
+        name: Install cargo-deb
+        continue-on-error: true
+        run: cargo install cargo-deb
+
+      - if: steps.has-cache.outputs.cache-hit != 'true' && (contains(matrix.os, 'ubuntu') || contains(matrix.os, 'debian'))
+        name: Build and package CodeCTRL for DEB-based systems
+        shell: bash
+        run: |
+          cargo deb
+
+      - if: steps.has-cache.outputs.cache-hit != 'true' && (contains(matrix.os, 'fedora') || contains(matrix.os, 'rhel'))
         name: Install cargo-generate-rpm
         continue-on-error: true
         run: cargo install cargo-generate-rpm
 
       - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Build and package CodeCTRL
+        name: Build and package CodeCTRL for RPM-based systems
         shell: bash
         run: |
           cargo build --release
           strip -s target/release/codectrl
           cargo generate-rpm
 
-      - name: Cache build
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: rhel-7-${{ hashFiles('**/Cargo.lock') }}
-
       - if: steps.has-cache.outputs.cache-hit != 'true'
-        name: Rename .rpm
+        name: Rename output
         run: ./find-and-rename-pkg.sh
 
-      - name: Upload .rpm artifact
+      - if: contains(matrix.os, 'ubuntu') || contains(matrix.os, 'debian')
+        name: Upload .deb artifact
         uses: actions/upload-artifact@v3
         with:
-          name: RHEL 7 package
+          name: ${{ matrix.os }} package
+          path: target/debian/*.deb
+
+      - if: contains(matrix.os, 'ubuntu') || contains(matrix.os, 'debian')
+        name: Upload .rpm artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.os }} package
           path: target/generate-rpm/*.rpm
 
   build-windows-latest:
     name: Build for Windows
     runs-on: windows-latest
+    needs: [fetch-sources]
     steps:
-      - uses: actions/checkout@v3
-
       - name: Fetch cache if already exists
         continue-on-error: true
         uses: actions/cache@v3
@@ -620,20 +140,11 @@ jobs:
             target/
           key: ${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
 
-  linux-all-in-one:
+  all-in-one:
     name: Combine all generated packages
     runs-on: ubuntu-22.04
     needs:
-      - build-debian-latest
-      - build-debian-10
-      - build-debian-sid
-      - build-ubuntu-lts
-      - build-ubuntu-20-04
-      - build-fedora-latest
-      - build-fedora-rawhide
-      - build-rhel-latest
-      - build-rhel-8
-      - build-rhel-7
+      - build-linux
       - build-windows-latest
     steps:
       - name: Download artifacts
