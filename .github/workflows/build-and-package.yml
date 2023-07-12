@@ -28,7 +28,7 @@ jobs:
           repository: STBoyden/codectrl-protobuf-specifications
           path: crates/protobuf-bindings/protos
 
-     - uses: actions-rs/toolchain@v1
+      - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
 
@@ -145,7 +145,7 @@ jobs:
           key: windows-${{ matrix.version }}-${{ hashFiles('**/Cargo.lock') }}
 
   all-in-one:
-    name: Combine all generated packages
+    name: Combine packages
     runs-on: ubuntu-22.04
     needs:
       - build-linux
