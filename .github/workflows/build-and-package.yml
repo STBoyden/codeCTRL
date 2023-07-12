@@ -6,6 +6,7 @@ on:
 
 jobs:
   fetch-sources:
+    name: Fetch sources
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -13,6 +14,11 @@ jobs:
         with:
           repository: STBoyden/codectrl-protobuf-specifications
           path: crates/protobuf-bindings/protos
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: sources
+          path: ${{ github.workspace }}
 
   build-linux:
     name: Build for Linux
@@ -32,11 +38,18 @@ jobs:
     runs-on: ubuntu-latest
     container: ghcr.io/stboyden/codectrl-pkg/${{ matrix.os }}:latest
     steps:
+      - uses: actions/download-artifact@v3
+        id: download
+        with:
+          name: sources
+
       - uses: actions-rs/toolchain@v1
+        working-directory: ${{ steps.download.outputs.download-path }}
         with:
           toolchain: nightly
 
       - name: Fetch cache if already exists
+        working-directory: ${{ steps.download.outputs.download-path }}
         continue-on-error: true
         uses: actions/cache@v3
         id: has-cache
@@ -51,22 +64,26 @@ jobs:
 
       - if: steps.has-cache.outputs.cache-hit != 'true' && (contains(matrix.os, 'ubuntu') || contains(matrix.os, 'debian'))
         name: Install cargo-deb
+        working-directory: ${{ steps.download.outputs.download-path }}
         continue-on-error: true
         run: cargo install cargo-deb
 
       - if: steps.has-cache.outputs.cache-hit != 'true' && (contains(matrix.os, 'ubuntu') || contains(matrix.os, 'debian'))
         name: Build and package CodeCTRL for DEB-based systems
+        working-directory: ${{ steps.download.outputs.download-path }}
         shell: bash
         run: |
           cargo deb
 
       - if: steps.has-cache.outputs.cache-hit != 'true' && (contains(matrix.os, 'fedora') || contains(matrix.os, 'rhel'))
         name: Install cargo-generate-rpm
+        working-directory: ${{ steps.download.outputs.download-path }}
         continue-on-error: true
         run: cargo install cargo-generate-rpm
 
       - if: steps.has-cache.outputs.cache-hit != 'true'
         name: Build and package CodeCTRL for RPM-based systems
+        working-directory: ${{ steps.download.outputs.download-path }}
         shell: bash
         run: |
           cargo build --release
@@ -75,10 +92,12 @@ jobs:
 
       - if: steps.has-cache.outputs.cache-hit != 'true'
         name: Rename output
+        working-directory: ${{ steps.download.outputs.download-path }}
         run: ./find-and-rename-pkg.sh
 
       - if: contains(matrix.os, 'ubuntu') || contains(matrix.os, 'debian')
         name: Upload .deb artifact
+        working-directory: ${{ steps.download.outputs.download-path }}
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.os }} package
@@ -86,6 +105,7 @@ jobs:
 
       - if: contains(matrix.os, 'ubuntu') || contains(matrix.os, 'debian')
         name: Upload .rpm artifact
+        working-directory: ${{ steps.download.outputs.download-path }}
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.os }} package
@@ -96,7 +116,13 @@ jobs:
     runs-on: windows-latest
     needs: [fetch-sources]
     steps:
+      - uses: actions/download-artifact@v3
+        id: download
+        with:
+          name: sources
+
       - name: Fetch cache if already exists
+        working-directory: ${{ steps.download.outputs.download-path }}
         continue-on-error: true
         uses: actions/cache@v3
         id: has-cache
@@ -111,24 +137,29 @@ jobs:
 
       - if: steps.has-cache.outputs.cache-hit != 'true'
         name: Install cargo-wix
+        working-directory: ${{ steps.download.outputs.download-path }}
         continue-on-error: true
         run: cargo install cargo-wix
 
       - if: steps.has-cache.outputs.cache-hit != 'true'
         name: Build CodeCTRL
+        working-directory: ${{ steps.download.outputs.download-path }}
         run: cargo build --release
 
       - if: steps.has-cache.outputs.cache-hit != 'true'
         name: Generate MSI
+        working-directory: ${{ steps.download.outputs.download-path }}
         run: cargo wix --nocapture --no-build
 
       - name: Upload .msi artifact
+        working-directory: ${{ steps.download.outputs.download-path }}
         uses: actions/upload-artifact@v3
         with:
           name: Windows MSI package
           path: target/wix/*.msi
 
       - name: Cache binary
+        working-directory: ${{ steps.download.outputs.download-path }}
         uses: actions/cache@v3
         id: cache-binary
         with:
