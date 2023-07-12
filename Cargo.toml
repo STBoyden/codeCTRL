@@ -5,6 +5,8 @@ edition = "2021"
 authors = [
   "Samuel Boyden <sam@sboyden.com>",
 ]
+license = "MIT"
+description = "A dynamic source code analysis tool, made by Samuel Boyden."
 
 [workspace]
 members = [
@@ -87,4 +89,4 @@ doc = true
 [package.metadata.wix]
 name = "CodeCTRL"
 product-name = "CodeCTRL"
-version = "1.0.0"
+version = "1.0.3"
