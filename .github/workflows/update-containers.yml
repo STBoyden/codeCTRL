@@ -6,18 +6,8 @@ on:
     - cron: "0 */2 * * */1"
 
 jobs:
-  set-date-env:
-    if: github.repository_owner == 'STBoyden'
-    name: Set date environment variable
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          set -x
-
-          echo "DATE=$(date +%d%m%Y_%H%M%S)" >> "$GITHUB_ENV"
-
   build-containers:
-    needs: set-date-env
+    if: github.repository_owner == 'STBoyden'
     name: Build container for ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -36,6 +26,8 @@ jobs:
     permissions:
       packages: write
     steps:
+      - run: echo "DATE=$(date +%d%m%Y_%H%M%S)" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v3
 
       - name: Set up Docker Buildx
