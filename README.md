@@ -3,6 +3,7 @@
 [![Formatting](https://github.com/STBoyden/codectrl/actions/workflows/reformat.yml/badge.svg)](https://github.com/STBoyden/codectrl/actions/workflows/reformat.yml)
 [![Clippy](https://github.com/STBoyden/codectrl/actions/workflows/clippy.yml/badge.svg)](https://github.com/STBoyden/codectrl/actions/workflows/clippy.yml)
 [![Build & Packaging](https://github.com/STBoyden/codectrl/actions/workflows/build-and-package.yml/badge.svg)](https://github.com/STBoyden/codectrl/actions/workflows/build-and-package.yml)
+[![Auto-update Build Containers](https://github.com/STBoyden/codectrl/actions/workflows/update-containers.yml/badge.svg)](https://github.com/STBoyden/codectrl/actions/workflows/update-containers.yml)
 
 ## Implementing a logger for a language
 
