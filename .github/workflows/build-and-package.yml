@@ -88,6 +88,52 @@ jobs:
           name: ${{ matrix.os }} package
           path: target/generate-rpm/*.rpm
 
+  build-macos:
+    name: Build for MacOS
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [13, 12, 11]
+    runs-on: macos-${{ matrix.version }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+        with:
+          repository: STBoyden/codectrl-protobuf-specifications
+          path: crates/protobuf-bindings/protos
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+
+      - name: Fetch cache if already exists
+        continue-on-error: true
+        uses: actions/cache@v3
+        id: has-cache
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: macos-${{ matrix.version }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - if: steps.has-cache.outputs.cache-hit != 'true'
+        name: Install cargo-bundle
+        continue-on-error: true
+        run: cargo install cargo-bundle
+
+      - if: steps.has-cache.outputs.cache-hit != 'true'
+        name: Build and package for MacOS ${{ matrix.version }}
+        run: cargo bundle --release
+
+      - name: Upload .app artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.os }} package
+          path: target/release/**/*.app
+
   build-windows:
     name: Build for Windows
     strategy:
@@ -151,6 +197,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs:
       - build-linux
+      - build-macos
       - build-windows
     steps:
       - name: Download artifacts
