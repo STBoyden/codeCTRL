@@ -43,7 +43,7 @@ jobs:
         run: |
           set -x
 
-          d="$(date --rfc-3339=seconds | sed 's/\ /_/g')"
+          d="$(date +%d%m%Y_%H%M%S)"
 
           docker build ./.github/containers/${{ matrix.os }} \
             -t ghcr.io/stboyden/codectrl-pkg/${{ matrix.os }}:latest \
