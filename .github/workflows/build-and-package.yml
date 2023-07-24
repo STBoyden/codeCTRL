@@ -8,6 +8,7 @@ jobs:
   build-linux:
     name: Build for Linux
     strategy:
+      fail-fast: false
       matrix:
         os:
           - debian-latest

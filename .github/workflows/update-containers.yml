@@ -9,6 +9,7 @@ jobs:
   build-containers:
     if: github.repository_owner == 'STBoyden'
     strategy:
+      fail-fast: false
       matrix:
         os:
           - debian-latest
