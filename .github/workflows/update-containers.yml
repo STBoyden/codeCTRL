@@ -48,6 +48,7 @@ jobs:
           platforms: linux/amd64
           push: true
           driver-opts: |
+            image=moby/buildkit:v0.11.6
             network=host
           tags: |
             ghcr.io/stboyden/codectrl-pkg/${{ matrix.os }}:latest
