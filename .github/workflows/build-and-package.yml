@@ -137,7 +137,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: MacOS ${{ matrix.version }} ${{ matrix.arch }} package
-          path: target/release/${{ matrix.arch }}-apple-darwin/bundle/osx/*.app/
+          path: target/${{ matrix.arch }}-apple-darwin/release/bundle/osx/*.app/
 
   build-windows:
     name: Build for Windows
