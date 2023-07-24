@@ -105,7 +105,7 @@ jobs:
 
       - uses: actions-rs/toolchain@v1
         with:
-          target: ${{ matrix.arch }}-apple-macos
+          target: ${{ matrix.arch }}-apple-darwin
           toolchain: nightly
 
       - name: Fetch cache if already exists
@@ -128,7 +128,7 @@ jobs:
 
       - if: steps.has-cache.outputs.cache-hit != 'true'
         name: Build and package for MacOS ${{ matrix.version }}
-        run: cargo bundle --release --target ${{ matrix.arch }}-apple-macos
+        run: cargo bundle --release --target ${{ matrix.arch }}-apple-darwin
 
       - name: Upload .app artifact
         uses: actions/upload-artifact@v3
