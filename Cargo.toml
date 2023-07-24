@@ -63,7 +63,7 @@ resources = [
   "LICENSE"
 ]
 copyright = "MIT"
-category = "Developmer Tool"
+category = "Developer Tool"
 
 [package.metadata.deb]
 name = "codectrl"
