@@ -124,7 +124,7 @@ jobs:
 
       - if: steps.has-cache.outputs.cache-hit != 'true'
         name: Generate MSI
-        run: cargo wix --nocapture --no-build
+        run: cargo wix --nocapture --no-build -p codectrl
 
       - name: Upload .msi artifact
         uses: actions/upload-artifact@v3
