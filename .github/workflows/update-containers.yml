@@ -47,6 +47,8 @@ jobs:
           context: ./.github/containers/${{ matrix.os }}
           platforms: linux/amd64
           push: true
+          driver-opts: |
+            network=host
           tags: |
             ghcr.io/stboyden/codectrl-pkg/${{ matrix.os }}:latest
             ghcr.io/stboyden/codectrl-pkg/${{ matrix.os }}:${{ github.sha }}
