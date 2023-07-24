@@ -91,8 +91,9 @@ jobs:
   build-windows:
     name: Build for Windows
     strategy:
+      fail-fast: false
       matrix:
-        version: [latest, 2019]
+        version: [2022, 2019]
     runs-on: windows-${{ matrix.version }}
     steps:
       - uses: actions/checkout@v3
@@ -160,3 +161,15 @@ jobs:
         with:
           name: All-in-One CodeCTRL Packages
           path: .
+
+      - name: Generate step summary
+        run: |
+          echo -e "Download links:" >> $GITHUB_STEP_SUMMARY
+          echo -e "- Windows 10/11 - [built on latest Windows server](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/Windows%20latest%20MSI.zip) or [built on Windows server 2019](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/Windows%202019%20MSI.zip)" >> $GITHUB_STEP_SUMMARY
+          echo -e "- Linux" >> $GITHUB_STEP_SUMMARY
+          echo -e "\t- Ubuntu - [latest LTS (22.04)](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/ubuntu-latest%20package.zip) or [20.04](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/ubuntu-20-04%20package.zip)" >> $GITHUB_STEP_SUMMARY
+          echo -e "\t- Debian - [12 (Bookworm)](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/debian-latest%20package.zip) or [Sid](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/debian-sid%20package.zip)" >> $GITHUB_STEP_SUMMARY
+          echo -e "\t- Fedora - [38](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/fedora-latest%20package.zip) or [Rawhide](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/fedora-rawhide%20package.zip)" >> $GITHUB_STEP_SUMMARY
+          echo -e "\t- RHEL - [7](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/rhel-7%20package.zip), [8](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/rhel-8%20package.zip), or [9](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/rhel-latest%20package.zip)" >> $GITHUB_STEP_SUMMARY
+          echo -e "" >> $GITHUB_STEP_SUMMARY
+          echo -e "A combined zip containing all the above files can be downloaded [here](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/All-in-One%20CodeCTRL%20Packages.zip)"
