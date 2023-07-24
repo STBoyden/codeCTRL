@@ -108,6 +108,9 @@ jobs:
           target: ${{ matrix.arch }}-apple-darwin
           toolchain: nightly
 
+      - if: ${{ matrix.arch == 'aarch64' }}
+        run: rustup target add aarch64-apple-darwin
+
       - name: Fetch cache if already exists
         continue-on-error: true
         uses: actions/cache@v3
