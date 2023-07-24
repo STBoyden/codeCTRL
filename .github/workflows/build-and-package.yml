@@ -80,7 +80,7 @@ jobs:
           name: ${{ matrix.os }} package
           path: target/debian/*.deb
 
-      - if: contains(matrix.os, 'ubuntu') || contains(matrix.os, 'debian')
+      - if: contains(matrix.os, 'fedora') || contains(matrix.os, 'rhel')
         name: Upload .rpm artifact
         uses: actions/upload-artifact@v3
         with:
