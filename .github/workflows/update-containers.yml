@@ -46,6 +46,9 @@ jobs:
           context: ./.github/containers/${{ matrix.os }}
           platforms: linux/amd64
           push: false
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           tags: |
             ghcr.io/stboyden/codectrl-pkg/${{ matrix.os }}:latest
             ghcr.io/stboyden/codectrl-pkg/${{ matrix.os }}:${{ github.sha }}
