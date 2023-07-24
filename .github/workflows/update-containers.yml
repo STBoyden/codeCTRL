@@ -43,9 +43,18 @@ jobs:
         run: |
           set -x
 
+          d="$(date --rfc-3339=seconds | sed 's/\ /_/g')"
+
           docker build ./.github/containers/${{ matrix.os }} \
             -t ghcr.io/stboyden/codectrl-pkg/${{ matrix.os }}:latest \
-            -t ghcr.io/stboyden/codectrl-pkg/${{ matrix.os }}:${{ github.sha }}
+            -t ghcr.io/stboyden/codectrl-pkg/${{ matrix.os }}:${{ github.sha }} \
+            -t "ghcr.io/stboyden/codectrl-pkg/${{ matrix.os }}:${d}"
+
 
           docker push ghcr.io/stboyden/codectrl-pkg/${{ matrix.os }}:latest
           docker push ghcr.io/stboyden/codectrl-pkg/${{ matrix.os }}:${{ github.sha }}
+          docker push "ghcr.io/stboyden/codectrl-pkg/${{ matrix.os }}:${d}"
+
+          set +x
+
+          echo "latest == ${{ github.sha }} == ${d}"
