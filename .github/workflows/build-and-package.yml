@@ -94,6 +94,7 @@ jobs:
       fail-fast: false
       matrix:
         version: [13, 12, 11]
+        arch: [x86_64, aarch64]
     runs-on: macos-${{ matrix.version }}
     steps:
       - uses: actions/checkout@v3
@@ -104,6 +105,7 @@ jobs:
 
       - uses: actions-rs/toolchain@v1
         with:
+          target: ${{ matrix.arch }}-apple-macos
           toolchain: nightly
 
       - name: Fetch cache if already exists
@@ -126,13 +128,13 @@ jobs:
 
       - if: steps.has-cache.outputs.cache-hit != 'true'
         name: Build and package for MacOS ${{ matrix.version }}
-        run: cargo bundle --release
+        run: cargo bundle --release --target ${{ matrix.arch }}-apple-macos
 
       - name: Upload .app artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.os }} package
-          path: target/release/**/*.app
+          name: MacOS ${{ matrix.version }} ${{ matrix.arch }} package
+          path: target/release/bundle/osx/*.app
 
   build-windows:
     name: Build for Windows
