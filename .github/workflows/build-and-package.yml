@@ -129,7 +129,7 @@ jobs:
       - name: Upload .msi artifact
         uses: actions/upload-artifact@v3
         with:
-          name: Windows MSI package
+          name: Windows ${{ matrix.version }} MSI
           path: target/wix/*.msi
 
       - name: Cache binary
