@@ -218,6 +218,10 @@ jobs:
         run: |
           echo -e "Download links:" >> $GITHUB_STEP_SUMMARY
           echo -e "- Windows 10/11 - [built on latest Windows server](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/Windows%20latest%20MSI.zip) or [built on Windows server 2019](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/Windows%202019%20MSI.zip)" >> $GITHUB_STEP_SUMMARY
+          echo -e "- Mac OS" >> $GITHUB_STEP_SUMMARY
+          echo -e "\t- Ventura - [Apple Silicon](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/MacOS%2013%20aarch64%20package.zip), [Intel](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/MacOS%2013%20x86_64%20package.zip)" >> $GITHUB_STEP_SUMMARY
+          echo -e "\t- Monterey - [Apple Silicon](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/MacOS%2012%20aarch64%20package.zip), [Intel](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/MacOS%2012%20x86_64%20package.zip)" >> $GITHUB_STEP_SUMMARY
+          echo -e "\t- Big Sur - [Apple Silicon](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/MacOS%2011%20aarch64%20package.zip), [Intel](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/MacOS%2011%20x86_64%20package.zip)" >> $GITHUB_STEP_SUMMARY
           echo -e "- Linux" >> $GITHUB_STEP_SUMMARY
           echo -e "\t- Ubuntu - [latest LTS (22.04)](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/ubuntu-latest%20package.zip) or [20.04](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/ubuntu-20-04%20package.zip)" >> $GITHUB_STEP_SUMMARY
           echo -e "\t- Debian - [12 (Bookworm)](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/debian-latest%20package.zip) or [Sid](https://nightly.link/STBoyden/codectrl/workflows/build-and-package/main/debian-sid%20package.zip)" >> $GITHUB_STEP_SUMMARY
