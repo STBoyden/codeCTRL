@@ -11,7 +11,7 @@ case $ID in
         export DEBIAN_FRONTEND=noninteractive
 
         apt update -y
-        apt install build-essential libfreetype-dev libfontconfig-dev curl -y
+        apt install build-essential libfreetype-dev libfontconfig-dev curl cmake -y
         ;;
     "fedora" | "rocky")
         packages=(freetype-devel expat-devel fontconfig-devel cmake)

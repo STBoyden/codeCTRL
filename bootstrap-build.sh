@@ -12,7 +12,7 @@ echo -e "\nInstalling dependencies for your distro...\n"
 case $ID in
     "debian" | "ubuntu" | "elementary")
         apt update -y
-        apt install build-essential libfreetype-dev libfontconfig-dev -y
+        apt install build-essential libfreetype-dev libfontconfig-dev cmake -y
         ;;
     "fedora" | "rocky")
         packages=(freetype-devel expat-devel fontconfig-devel cmake)
