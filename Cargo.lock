@@ -730,6 +730,7 @@ version = "0.99.3"
 dependencies = [
  "codectrl-gui",
  "codectrl-server",
+ "tokio",
 ]
 
 [[package]]

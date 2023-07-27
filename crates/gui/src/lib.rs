@@ -180,7 +180,13 @@ impl Application for App {
 		(
 			App::default(),
 			Command::perform(
-				codectrl_server::run_server(Some(flags.host.clone()), Some(flags.port), None, None),
+				codectrl_server::run_server(
+					Some(flags.host.clone()),
+					Some(flags.port),
+					None,
+					None,
+					false,
+				),
 				move |result| Message::ServerStarted {
 					server_result: Arc::new(result),
 					details: (flags.host, flags.port),

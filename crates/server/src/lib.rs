@@ -623,6 +623,7 @@ pub async fn run_server(
 	port: Option<u32>,
 	requires_authentication: Option<bool>,
 	redirect_handler_port: Option<u16>,
+	wait_for_finish: bool,
 ) -> ServerResult {
 	dotenv().ok();
 	env_logger::try_init().ok();
@@ -736,7 +737,7 @@ pub async fn run_server(
 
 	let (error_sender, error_receiver) = mpsc::unbounded_channel();
 
-	tokio::spawn(async move {
+	let handle = tokio::spawn(async move {
 		Server::builder()
 			.accept_http1(true)
 			.add_service(tonic_web::enable(server_service))
@@ -746,6 +747,10 @@ pub async fn run_server(
 			.await
 			.map_err(|error| error_sender.send(error.into()))
 	});
+
+	if wait_for_finish {
+		_ = handle.await;
+	}
 
 	Ok(error_receiver)
 }

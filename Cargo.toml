@@ -16,6 +16,11 @@ members = [
   "crates/logger"
 ]
 
+[features]
+default = ["full"]
+full = ["dep:codectrl-gui", "dep:codectrl-server"]
+server-only = ["dep:codectrl-server", "dep:tokio"]
+
 [workspace.package]
 version = "0.99.3"
 edition = "2021"
@@ -50,8 +55,14 @@ path = "crates/core/main.rs"
 name = "codectrl"
 
 [dependencies]
-codectrl-gui = { path = "crates/gui" }
-codectrl-server = { path = "crates/server" }
+codectrl-gui = { optional = true, path = "crates/gui" }
+codectrl-server = { optional = true, path = "crates/server" }
+tokio = { optional = true, version = "1.0", features = [
+    "rt-multi-thread",
+    "macros",
+    "sync",
+    "time",
+] }
 
 [profile.dev.package."*"]
 opt-level = 3
