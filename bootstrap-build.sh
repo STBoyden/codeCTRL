@@ -14,7 +14,7 @@ case $ID in
         export DEBIAN_FRONTEND=noninteractive
 
         apt update -y
-        apt install build-essential libfreetype-dev libfontconfig-dev
+        apt install build-essential libfreetype-dev libfontconfig-dev -y
         ;;
     "fedora" | "rocky")
         packages=(freetype-devel expat-devel fontconfig-devel)
@@ -30,11 +30,14 @@ case $ID in
             $dnf groupinstall "Development Tools" -y
         fi
 
+        if [[ ! "$ID" == "rocky" ]]; then
+            packages+=(g++)
+        fi
 
         if [[ "$ID" == "rocky" && $(rpm -E %rhel) -ge 9 ]]; then
             $dnf --enablerepo=crb --allowerasing install "${packages[@]}" -y
         else
-            $dnf install "${packages[@]}" g++ -y
+            $dnf install "${packages[@]}" -y
         fi
         ;;
     "centos")
