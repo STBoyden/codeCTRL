@@ -11,8 +11,6 @@ echo -e "\nInstalling dependencies for your distro...\n"
 
 case $ID in
     "debian" | "ubuntu" | "elementary")
-        export DEBIAN_FRONTEND=noninteractive
-
         apt update -y
         apt install build-essential libfreetype-dev libfontconfig-dev -y
         ;;
