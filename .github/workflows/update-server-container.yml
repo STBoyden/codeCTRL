@@ -62,7 +62,6 @@ jobs:
           set -x
 
           docker push ghcr.io/stboyden/codectrl:latest
-          docker push ghcr.io/stboyden/codectrl:nightly
           docker push ghcr.io/stboyden/codectrl:${{ github.sha }}
           docker push ghcr.io/stboyden/codectrl:${{ env.DATE }}
 
