@@ -11,19 +11,10 @@ case $ID in
         export DEBIAN_FRONTEND=noninteractive
 
         apt update -y
-        pixbuf_dev=""
-        case "$VERSION_CODENAME" in
-            "focal" | "buster")
-                pixbuf_dev="libgdk-pixbuf2.0-dev"
-                ;;
-            *)
-                pixbuf_dev="libgdk-pixbuf-2.0-dev"
-                ;;
-        esac
-        apt install build-essential clang cmake libglib2.0-dev libpango1.0-dev "$pixbuf_dev" libatk1.0-dev libgtk-3-dev libxcb-shape0-dev libxcb-xfixes0-dev curl libc6-dev libsqlite3-dev git -y
+        apt install build-essential libfreetype-dev libfontconfig-dev
         ;;
     "fedora" | "rocky")
-        packages=(gobject-introspection-devel cairo-devel atk-devel pango-devel gdk-pixbuf2-devel gtk3-devel clang curl cmake git)
+        packages=(freetype-devel expat-devel fontconfig-devel)
 
         dnf="$(command -v dnf)"
 
@@ -40,7 +31,7 @@ case $ID in
         if [[ "$ID" == "rocky" && $(rpm -E %rhel) -ge 9 ]]; then
             $dnf --enablerepo=crb --allowerasing install "${packages[@]}" -y
         else
-            $dnf install "${packages[@]}" -y
+            $dnf install "${packages[@]}" g++ -y
         fi
         ;;
     "centos")
@@ -48,12 +39,7 @@ case $ID in
         yum update -y
         yum groupinstall "Development Tools" -y
 
-        yum install gobject-introspection-devel cairo-devel atk-devel pango-devel gdk-pixbuf2-devel gtk3-devel clang curl cmake3 git -y
+        yum install freetype-devel expat-devel fontconfig-devel cmake3 -y
         ln -s /usr/bin/cmake3 /usr/bin/cmake
         ;;
 esac
-
-if [[ -n $(command -v rustup 2>/dev/null ) ]]; then
-    echo -e "\nInstalling wasm32-unknown-unknown Rust target..."
-    rustup target install wasm32-unknown-unknown
-fi
