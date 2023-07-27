@@ -17,7 +17,7 @@ case $ID in
         apt install build-essential libfreetype-dev libfontconfig-dev -y
         ;;
     "fedora" | "rocky")
-        packages=(freetype-devel expat-devel fontconfig-devel)
+        packages=(freetype-devel expat-devel fontconfig-devel cmake)
 
         dnf="$(command -v dnf)"
 
