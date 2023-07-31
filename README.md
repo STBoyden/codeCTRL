@@ -104,4 +104,4 @@ MSIs for Windows is automatically generated on every commit of the CodeCTRL
 `main` branch and can be found in one of the completed workflow runs
 [here](https://github.com/STBoyden/codectrl/actions/workflows/build-and-package.yml).
 
-Similarly, there are generated MacOS app packages on every commit on the CodeCTRL main branch and can be gound on the same link above.
+Similarly, there are generated MacOS app packages on every commit on the CodeCTRL main branch and can be found on the same link above.
