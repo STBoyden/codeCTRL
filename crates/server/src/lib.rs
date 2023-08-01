@@ -466,6 +466,10 @@ impl LogClientTrait for Service {
 
 		Self::verify_log(&mut log, remote_addr, &metadata);
 
+		if option_env!("LOG_PRINT").is_some() {
+			dbg!(&log);
+		}
+
 		self.logs.write().await.push_back(log);
 
 		info!("Log received from {}", remote_addr.unwrap());
@@ -490,6 +494,10 @@ impl LogClientTrait for Service {
 		let mut amount = 0;
 		while let Some(log) = stream.next().await {
 			let mut log = log?;
+
+			if option_env!("LOG_PRINT").is_some() {
+				dbg!(&log);
+			}
 
 			Self::verify_log(&mut log, remote_addr, &metadata);
 			lock.push_back(log);
