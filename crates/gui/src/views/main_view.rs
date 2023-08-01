@@ -62,20 +62,22 @@ impl View for Main {
 		use Message::*;
 
 		match message {
-			LogAppearanceStateChanged => {
-				self.log_appearance.toggle();
-
+			SortLogs => {
 				use LogAppearanceState::*;
-				self.logs.sort_by(|a, b| match self.log_appearance {
-					NewestFirst => a.time.cmp(&b.time),
-					OldestFirst => b.time.cmp(&a.time),
+				self.logs.sort_by(|a, b| match &self.log_appearance {
+					NewestFirst => b.time.cmp(&a.time),
+					OldestFirst => a.time.cmp(&b.time),
 				});
 
 				Command::none()
 			},
+			LogAppearanceStateChanged => {
+				self.log_appearance.toggle();
+				self.send_message(SortLogs)
+			},
 			ServerAddLog(log) => {
 				self.logs.push(LogItem::new(log, Local::now()));
-				Command::none()
+				self.send_message(SortLogs)
 			},
 			LogClicked(log) => {
 				let uuid = log.uuid.clone();

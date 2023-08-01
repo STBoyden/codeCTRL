@@ -92,6 +92,7 @@ pub enum Message {
 	SetServerErrorChannel(Arc<mpsc::UnboundedReceiver<anyhow::Error>>),
 	GetServerErrors(Arc<Mutex<mpsc::UnboundedReceiver<anyhow::Error>>>),
 	AddServerError(Option<Arc<anyhow::Error>>),
+	SortLogs,
 	ServerAddLog(Log),
 }
 
@@ -207,6 +208,7 @@ impl Application for App {
 			| LogDetailsSplitResize(_)
 			| LogIndexChanged(_)
 			| UpdateLogItems(_)
+			| SortLogs
 			| LogDetailsSplitClose => self.main_view.update(message),
 
 			FilterTextChanged(_)
