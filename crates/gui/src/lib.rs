@@ -3,8 +3,12 @@
 #![allow(clippy::enum_glob_use)]
 
 mod styles;
+mod theme;
 mod view;
 mod views;
+
+pub use iced;
+use theme::{Theme, ThemeEngine};
 
 use crate::view::View;
 
@@ -15,12 +19,12 @@ use codectrl_protobuf_bindings::{
 };
 use codectrl_server::{self, ServerResult};
 use dark_light::{self, Mode as ThemeMode};
-pub use iced;
 use iced::{
 	executor, subscription,
+	theme::{Custom, Palette},
 	widget::{button, checkbox, column, container, row, text, text_input, Rule},
 	window::close,
-	Alignment, Application, Command, Element, Length, Subscription, Theme,
+	Alignment, Application, Command, Element, Length, Subscription, Theme as IcedTheme,
 };
 use iced_aw::{
 	helpers::{menu_bar, menu_tree},
@@ -33,7 +37,9 @@ use iced_native::futures::StreamExt;
 use parking_lot::Mutex;
 use std::{
 	borrow::Cow,
-	sync::Arc,
+	cell::{Cell, RefCell},
+	fs::File,
+	sync::{atomic::AtomicI32, Arc},
 	time::{Duration, Instant},
 };
 use tokio::sync::mpsc;
@@ -42,6 +48,13 @@ use tonic::{transport::Channel, Response, Status, Streaming};
 pub enum PauseState {
 	Paused,
 	InProgress,
+}
+
+pub enum ThemeState {
+	Started(ThemeEngine),
+	Loaded(ThemeEngine),
+	Error(crate::theme::engine::Error),
+	Ended,
 }
 
 type Client = LogServerClient<Channel>;
@@ -81,6 +94,7 @@ pub enum Message {
 	SplitResize(u16),
 	NoOp,
 	Quit,
+	ThemesLoaded(ThemeEngine),
 
 	// server-related
 	ServerStarted {
@@ -90,10 +104,10 @@ pub enum Message {
 	GetConnectionDetails(Client, Option<ServerDetails>),
 	SetConnectionDetails(Arc<Option<Response<ServerDetails>>>),
 	ShowServerErrors,
-	ShowServerError(Arc<anyhow::Error>),
-	SetServerErrorChannel(Arc<mpsc::UnboundedReceiver<anyhow::Error>>),
-	GetServerErrors(Arc<Mutex<mpsc::UnboundedReceiver<anyhow::Error>>>),
-	AddServerError(Option<Arc<anyhow::Error>>),
+	ShowServerError(Arc<Error>),
+	SetServerErrorChannel(Arc<mpsc::UnboundedReceiver<Error>>),
+	GetServerErrors(Arc<Mutex<mpsc::UnboundedReceiver<Error>>>),
+	AddServerError(Option<Arc<Error>>),
 	SortLogs,
 	ServerAddLog(Log),
 }
@@ -132,8 +146,8 @@ impl Default for Flags {
 #[derive(Debug, Clone)]
 pub struct App {
 	// server communication
-	server_errors_channel: Option<Arc<Mutex<mpsc::UnboundedReceiver<anyhow::Error>>>>,
-	server_errors: Vec<Arc<anyhow::Error>>,
+	server_errors_channel: Option<Arc<Mutex<mpsc::UnboundedReceiver<Error>>>>,
+	server_errors: Vec<Arc<Error>>,
 	host: String,
 	port: u32,
 	uptime: Duration,
@@ -146,6 +160,10 @@ pub struct App {
 	view_state: ViewState,
 	main_view: views::Main,
 	searching_view: views::Searching,
+
+	// themes
+	theme: Theme,
+	theme_engine: ThemeEngine,
 }
 
 impl Default for App {
@@ -165,183 +183,17 @@ impl App {
 			view_state: ViewState::default(),
 			main_view: views::Main::default(),
 			searching_view: views::Searching::default(),
+			theme: Theme::catppuccin_frappe_sky(),
+			theme_engine: ThemeEngine::new(),
 		}
 	}
 
 	fn send_message(&self, message: Message) -> Command<Message> {
 		Command::perform(async {}, |_| message)
 	}
-}
 
-impl Application for App {
-	type Message = Message;
-	type Executor = executor::Default;
-	type Theme = Theme;
-	type Flags = Flags;
-
-	fn new(flags: Self::Flags) -> (Self, Command<Message>) {
-		(
-			App::default(),
-			Command::perform(
-				codectrl_server::run_server(
-					Some(flags.host.clone()),
-					Some(flags.port),
-					None,
-					None,
-					false,
-				),
-				move |result| Message::ServerStarted {
-					server_result: Arc::new(result),
-					details: (flags.host, flags.port),
-				},
-			),
-		)
-	}
-
-	fn title(&self) -> String { String::from("CodeCTRL") }
-
-	fn update(&mut self, message: Self::Message) -> Command<Message> {
-		use Message::*;
-
-		match message {
-			LogAppearanceStateChanged
-			| ServerAddLog(_)
-			| LogClicked(_)
-			| LogDetailsSplitResize(_)
-			| LogDetailsInnerSplitResize(_)
-			| LogIndexChanged(_)
-			| UpdateLogItems(_)
-			| SortLogs
-			| LogDetailsSplitClose => self.main_view.update(message),
-
-			FilterTextChanged(_)
-			| ClearFilterText
-			| FilterCaseSenitivityChanged(_)
-			| FilterRegexChanged(_) => self.searching_view.update(message),
-
-			UpdateViewState(state) => {
-				self.view_state = state;
-				Command::none()
-			},
-			SplitResize(size) => {
-				self.split_size = Some(size);
-				Command::none()
-			},
-			ServerStarted {
-				server_result,
-				details: (host, port),
-			} => match Arc::try_unwrap(server_result) {
-				Ok(x) if x.is_ok() => {
-					let channel = x.unwrap();
-					self.host = host;
-					self.port = port;
-
-					self.send_message(SetServerErrorChannel(Arc::new(channel)))
-				},
-				Ok(x) if x.is_err() => {
-					let error = x.unwrap_err();
-
-					self.send_message(AddServerError(Some(Arc::new(error))))
-				},
-				Ok(_) => unreachable!(),
-				Err(_) => self.send_message(AddServerError(Some(Arc::new(Error::msg(
-					"Could not unwrap server result",
-				))))),
-			},
-			SetServerErrorChannel(rx) => {
-				if let Ok(rx) = Arc::try_unwrap(rx) {
-					self.server_errors_channel = Some(Arc::new(Mutex::new(rx)));
-				} else {
-					return self.send_message(AddServerError(Some(Arc::new(anyhow::Error::msg(
-						"Could not unwrap server error receiver",
-					)))));
-				}
-
-				Command::none()
-			},
-
-			GetServerErrors(rx) => Command::perform(
-				async move {
-					let mut lock = rx.lock();
-					if let Ok(msg) = lock.try_recv() {
-						Some(Arc::new(msg))
-					} else {
-						None
-					}
-				},
-				|msg| AddServerError(msg),
-			),
-			AddServerError(error) => {
-				if let Some(error) = error {
-					self.server_errors.push(error);
-				}
-
-				self.send_message(ShowServerErrors)
-			},
-			GetConnectionDetails(mut client, details) => match details {
-				Some(details) =>
-					self.send_message(SetConnectionDetails(Arc::new(Some(Response::new(details))))),
-				None if Instant::now().duration_since(self.last_updated).as_secs() >= 1 =>
-					Command::perform(
-						async move { Arc::new(client.get_server_details(()).await.ok()) },
-						SetConnectionDetails,
-					),
-				None => Command::none(),
-			},
-			SetConnectionDetails(details) => {
-				if let Some(details) = details.as_ref() {
-					let details = details.get_ref();
-
-					self.host = details.host.clone();
-					self.port = details.port;
-
-					if details.uptime != self.uptime.as_secs() {
-						self.uptime = Duration::new(details.uptime, 0);
-					}
-
-					self.last_updated = Instant::now();
-				}
-
-				Command::none()
-			},
-			ShowServerErrors => {
-				let get = if self.server_errors_channel.is_some() {
-					let channel = self.server_errors_channel.as_ref().unwrap();
-					let channel = Arc::clone(channel);
-
-					self.send_message(GetServerErrors(channel))
-				} else {
-					Command::none()
-				};
-
-				let mut show = vec![];
-
-				while let Some(current) = self.server_errors.pop() {
-					show.push(current);
-				}
-
-				let show = Command::batch(
-					show
-						.iter()
-						.map(|error| self.send_message(ShowServerError(Arc::clone(error)))),
-				);
-
-				Command::batch(vec![get, show])
-			},
-
-			ShowServerError(error) => {
-				dbg!(error);
-				Command::none()
-			},
-			NoOp => Command::none(),
-			Quit => close(),
-		}
-	}
-
-	fn subscription(&self) -> Subscription<Self::Message> {
-		let mut batch = vec![];
-
-		batch.push(subscription::unfold(
+	fn start_refresh_errors_subscription(&self) -> Subscription<Message> {
+		subscription::unfold(
 			"RefreshErrors",
 			PauseState::InProgress,
 			move |state| async move {
@@ -354,9 +206,30 @@ impl Application for App {
 					PauseState::InProgress => (Message::ShowServerErrors, PauseState::Paused),
 				}
 			},
-		));
+		)
+	}
 
-		batch.push(subscription::unfold(
+	fn start_load_themes_subscription(&self) -> Subscription<Message> {
+		subscription::unfold(
+			"LoadThemes",
+			ThemeState::Started(self.theme_engine.clone()),
+			move |state| async move {
+				match state {
+					ThemeState::Started(mut engine) => match engine.load_themes().await {
+						Ok(_) => (Message::NoOp, ThemeState::Loaded(engine)),
+						Err(e) => (Message::NoOp, ThemeState::Error(e)),
+					},
+					ThemeState::Loaded(engine) => (Message::ThemesLoaded(engine), ThemeState::Ended),
+					// TODO: handle errors regarding loading themes
+					ThemeState::Error(_error) => todo!(),
+					ThemeState::Ended => (Message::NoOp, ThemeState::Ended),
+				}
+			},
+		)
+	}
+
+	fn start_get_logs_subscription(&self) -> Subscription<Message> {
+		subscription::unfold(
 			"GetLogs",
 			GrpcConnection::NotConnected(self.host.clone(), self.port),
 			move |state| async move {
@@ -457,14 +330,193 @@ impl Application for App {
 								)
 							},
 							_ => (
-								Message::AddServerError(Some(Arc::new(anyhow::Error::msg(message)))),
+								Message::AddServerError(Some(Arc::new(Error::msg(message)))),
 								GrpcConnection::Connected(client, connection),
 							),
 						}
 					},
 				}
 			},
-		));
+		)
+	}
+}
+
+impl Application for App {
+	type Message = Message;
+	type Executor = executor::Default;
+	type Theme = IcedTheme;
+	type Flags = Flags;
+
+	fn new(flags: Self::Flags) -> (Self, Command<Message>) {
+		(
+			App::default(),
+			Command::perform(
+				codectrl_server::run_server(
+					Some(flags.host.clone()),
+					Some(flags.port),
+					None,
+					None,
+					false,
+				),
+				move |result| Message::ServerStarted {
+					server_result: Arc::new(result),
+					details: (flags.host, flags.port),
+				},
+			),
+		)
+	}
+
+	fn title(&self) -> String { String::from("CodeCTRL") }
+
+	fn update(&mut self, message: Self::Message) -> Command<Message> {
+		use Message::*;
+
+		match message {
+			LogAppearanceStateChanged
+			| ServerAddLog(_)
+			| LogClicked(_)
+			| LogDetailsSplitResize(_)
+			| LogDetailsInnerSplitResize(_)
+			| LogIndexChanged(_)
+			| UpdateLogItems(_)
+			| SortLogs
+			| LogDetailsSplitClose => self.main_view.update(message),
+
+			FilterTextChanged(_)
+			| ClearFilterText
+			| FilterCaseSenitivityChanged(_)
+			| FilterRegexChanged(_) => self.searching_view.update(message),
+
+			UpdateViewState(state) => {
+				self.view_state = state;
+				Command::none()
+			},
+			SplitResize(size) => {
+				self.split_size = Some(size);
+				Command::none()
+			},
+			ServerStarted {
+				server_result,
+				details: (host, port),
+			} => match Arc::try_unwrap(server_result) {
+				Ok(x) if x.is_ok() => {
+					let channel = x.unwrap();
+					self.host = host;
+					self.port = port;
+
+					self.send_message(SetServerErrorChannel(Arc::new(channel)))
+				},
+				Ok(x) if x.is_err() => {
+					let error = x.unwrap_err();
+
+					self.send_message(AddServerError(Some(Arc::new(error))))
+				},
+				Ok(_) => unreachable!(),
+				Err(_) => self.send_message(AddServerError(Some(Arc::new(Error::msg(
+					"Could not unwrap server result",
+				))))),
+			},
+			SetServerErrorChannel(rx) => {
+				if let Ok(rx) = Arc::try_unwrap(rx) {
+					self.server_errors_channel = Some(Arc::new(Mutex::new(rx)));
+				} else {
+					return self.send_message(AddServerError(Some(Arc::new(Error::msg(
+						"Could not unwrap server error receiver",
+					)))));
+				}
+
+				Command::none()
+			},
+
+			GetServerErrors(rx) => Command::perform(
+				async move {
+					let mut lock = rx.lock();
+					if let Ok(msg) = lock.try_recv() {
+						Some(Arc::new(msg))
+					} else {
+						None
+					}
+				},
+				|msg| AddServerError(msg),
+			),
+			AddServerError(error) => {
+				if let Some(error) = error {
+					self.server_errors.push(error);
+				}
+
+				self.send_message(ShowServerErrors)
+			},
+			GetConnectionDetails(mut client, details) => match details {
+				Some(details) =>
+					self.send_message(SetConnectionDetails(Arc::new(Some(Response::new(details))))),
+				None if Instant::now().duration_since(self.last_updated).as_secs() >= 1 =>
+					Command::perform(
+						async move { Arc::new(client.get_server_details(()).await.ok()) },
+						SetConnectionDetails,
+					),
+				None => Command::none(),
+			},
+			SetConnectionDetails(details) => {
+				if let Some(details) = details.as_ref() {
+					let details = details.get_ref();
+
+					self.host = details.host.clone();
+					self.port = details.port;
+
+					if details.uptime != self.uptime.as_secs() {
+						self.uptime = Duration::new(details.uptime, 0);
+					}
+
+					self.last_updated = Instant::now();
+				}
+
+				Command::none()
+			},
+			ShowServerErrors => {
+				let get = if self.server_errors_channel.is_some() {
+					let channel = self.server_errors_channel.as_ref().unwrap();
+					let channel = Arc::clone(channel);
+
+					self.send_message(GetServerErrors(channel))
+				} else {
+					Command::none()
+				};
+
+				let mut show = vec![];
+
+				while let Some(current) = self.server_errors.pop() {
+					show.push(current);
+				}
+
+				let show = Command::batch(
+					show
+						.iter()
+						.map(|error| self.send_message(ShowServerError(Arc::clone(error)))),
+				);
+
+				Command::batch(vec![get, show])
+			},
+
+			ShowServerError(error) => {
+				dbg!(error);
+				Command::none()
+			},
+			NoOp => Command::none(),
+			Quit => close(),
+			ThemesLoaded(engine) => {
+				self.theme_engine = engine;
+
+				Command::none()
+			},
+		}
+	}
+
+	fn subscription(&self) -> Subscription<Self::Message> {
+		let mut batch = vec![];
+
+		batch.push(self.start_refresh_errors_subscription());
+		batch.push(self.start_load_themes_subscription());
+		batch.push(self.start_get_logs_subscription());
 
 		Subscription::batch(batch)
 	}
@@ -493,6 +545,14 @@ impl Application for App {
 			.spacing(1.0)
 			.padding(2.0);
 
+		let mut theme_elements = vec![];
+
+		for (index, theme) in self.theme_engine.get_themes().iter().enumerate() {
+			let choice = checkbox(theme.get_name(), *theme == self.theme, |_| Message::NoOp).into();
+
+			theme_elements.push(choice);
+		}
+
 		let side_bar = container(
 			column![
 				text_input("Filter", &self.searching_view.filter).on_input(Message::FilterTextChanged),
@@ -516,6 +576,8 @@ impl Application for App {
 				Rule::horizontal(1.0),
 				text(format!("Server address: {}:{}", self.host, self.port)),
 				text(format!("Server uptime: {}s", self.uptime.as_secs())),
+				Rule::horizontal(1.0),
+				column(theme_elements),
 			]
 			.align_items(Alignment::Start)
 			.spacing(4.0)
@@ -544,12 +606,11 @@ impl Application for App {
 		.into()
 	}
 
-	fn theme(&self) -> Theme {
-		let mode = dark_light::detect();
-
-		match mode {
-			ThemeMode::Dark | ThemeMode::Default => Theme::Dark,
-			ThemeMode::Light => Theme::Light,
+	fn theme(&self) -> IcedTheme {
+		if let Ok(palette) = self.theme.clone().try_into() {
+			IcedTheme::Custom(Box::new(Custom::new(palette)))
+		} else {
+			IcedTheme::Dark
 		}
 	}
 }

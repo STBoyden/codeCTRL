@@ -16,7 +16,7 @@ ciborium = "0.2"
 futures-util = "0.3"
 hashbag = "0.1.9"
 serde = { workspace = true }
-thiserror = "1.0"
+thiserror = { workspace = true }
 tokio = { workspace = true }
 codectrl-protobuf-bindings = { workspace = true }
 tonic = { workspace = true }

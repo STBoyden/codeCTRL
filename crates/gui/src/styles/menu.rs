@@ -1,4 +1,3 @@
-use iced::widget::button;
 use iced_aw::menu;
 
 pub struct MenuStyle;

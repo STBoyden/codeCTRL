@@ -51,7 +51,7 @@ pub enum LoggerError {
 	LoggerError(String),
 	/// Any other error with unknown origins.
 	#[error("An unknown error occured: {0}")]
-	Other(#[from] anyhow::Error),
+	Other(#[from] anyhow::AnyhowError),
 }
 
 impl From<RequestResult> for LoggerError {
