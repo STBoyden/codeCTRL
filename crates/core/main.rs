@@ -17,6 +17,8 @@ fn main() -> iced::Result {
 		id: Some(String::from("CodeCTRL")),
 		flags: Flags::default(),
 		antialiasing: true,
+		exit_on_close_request: true,
+
 		..Settings::default()
 	})
 }
