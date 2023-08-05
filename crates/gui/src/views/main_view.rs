@@ -89,6 +89,12 @@ impl View for Main {
 				self.log_details_split = size;
 				Command::none()
 			},
+			LogDetailsInnerSplitResize(_) =>
+				if let Some(ref mut log_details_view) = self.log_details_view {
+					log_details_view.update(message)
+				} else {
+					Command::none()
+				},
 			LogDetailsSplitClose => {
 				self.log_details_view = None;
 				self.send_message(UpdateLogItems(Box::new(LogIndexChanged(None))))

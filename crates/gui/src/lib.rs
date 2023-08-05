@@ -2,6 +2,7 @@
 #![warn(clippy::perf, clippy::pedantic)]
 #![allow(clippy::enum_glob_use)]
 
+mod styles;
 mod view;
 mod views;
 
@@ -65,6 +66,7 @@ pub enum Message {
 	LogClicked(Log),
 	LogIndexChanged(Option<Cow<'static, str>>),
 	LogDetailsSplitResize(u16),
+	LogDetailsInnerSplitResize(u16),
 	UpdateLogItems(Box<Self>),
 	LogDetailsSplitClose,
 
@@ -106,7 +108,7 @@ pub enum ViewState {
 fn separator<'a, Message>() -> iced_aw::menu::menu_tree::MenuTree<'a, Message, iced::Renderer> {
 	menu_tree!(quad::Quad {
 		color: [0.5; 3].into(),
-		border_radius: 4.0.into(),
+		border_radius: [4.0, 4.0, 4.0, 4.0],
 		inner_bounds: quad::InnerBounds::Ratio(0.98, 0.1),
 		..Default::default()
 	})
@@ -206,6 +208,7 @@ impl Application for App {
 			| ServerAddLog(_)
 			| LogClicked(_)
 			| LogDetailsSplitResize(_)
+			| LogDetailsInnerSplitResize(_)
 			| LogIndexChanged(_)
 			| UpdateLogItems(_)
 			| SortLogs
