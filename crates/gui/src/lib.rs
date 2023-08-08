@@ -547,7 +547,7 @@ impl Application for App {
 
 		let mut theme_elements = vec![];
 
-		for (index, theme) in self.theme_engine.get_themes().iter().enumerate() {
+		for (index, theme) in self.theme_engine.get_themes().read().iter().enumerate() {
 			let choice = checkbox(theme.get_name(), *theme == self.theme, |_| Message::NoOp).into();
 
 			theme_elements.push(choice);

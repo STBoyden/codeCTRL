@@ -1,7 +1,8 @@
 use super::Theme;
 use dashmap::DashSet;
 use directories::ProjectDirs;
-use std::io;
+use parking_lot::RwLock;
+use std::{io, sync::Arc};
 use tokio::{
 	fs::{create_dir_all, read_dir, File},
 	io::{AsyncReadExt, BufReader},
@@ -21,17 +22,17 @@ type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Clone)]
 pub struct ThemeEngine {
-	themes: DashSet<Theme>,
+	themes: Arc<RwLock<DashSet<Theme>>>,
 }
 
 impl ThemeEngine {
 	pub fn new() -> Self {
 		Self {
-			themes: DashSet::new(),
+			themes: Arc::new(RwLock::new(DashSet::new())),
 		}
 	}
 
-	pub fn get_themes(&self) -> &DashSet<Theme> { &self.themes }
+	pub fn get_themes(&self) -> Arc<RwLock<DashSet<Theme>>> { Arc::clone(&self.themes) }
 
 	pub async fn load_themes(&mut self) -> Result<()> {
 		let project_dir =
@@ -45,17 +46,6 @@ impl ThemeEngine {
 				continue;
 			}
 
-			let extension = dir_entry
-				.path()
-				.extension()
-				.unwrap()
-				.to_string_lossy()
-				.to_string();
-
-			if extension != "json" {
-				continue;
-			}
-
 			let theme_file = File::open(dir_entry.path()).await?;
 			let mut theme_file_reader = BufReader::new(theme_file);
 
@@ -64,7 +54,7 @@ impl ThemeEngine {
 
 			let theme: Theme = serde_json::from_str(&data)?;
 
-			self.themes.insert(theme);
+			self.themes.write().insert(theme);
 		}
 
 		Ok(())
