@@ -13,9 +13,9 @@ pub enum Error {
 	#[error("could not create project directory")]
 	NoProjectDir,
 	#[error("an io error occurred: {0}")]
-	IOError(#[from] io::Error),
+	IO(#[from] io::Error),
 	#[error("could not parse theme file: {0}")]
-	SerdeError(#[from] serde_json::Error),
+	Serde(#[from] serde_json::Error),
 }
 
 type Result<T> = std::result::Result<T, Error>;
@@ -23,6 +23,10 @@ type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug, Clone)]
 pub struct ThemeEngine {
 	themes: Arc<RwLock<DashSet<Theme>>>,
+}
+
+impl Default for ThemeEngine {
+	fn default() -> Self { Self::new() }
 }
 
 impl ThemeEngine {

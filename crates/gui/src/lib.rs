@@ -1,6 +1,10 @@
 #![feature(associated_type_defaults)]
 #![warn(clippy::perf, clippy::pedantic)]
-#![allow(clippy::enum_glob_use)]
+#![allow(
+	clippy::enum_glob_use,
+	clippy::too_many_lines,
+	clippy::module_name_repetitions
+)]
 
 use std::{
 	borrow::Cow,
@@ -9,12 +13,11 @@ use std::{
 };
 
 use anyhow::Error;
-use dark_light::{self};
 pub use iced;
 use iced::{
 	executor, subscription,
 	theme::Custom,
-	widget::{button, checkbox, column, container},
+	widget::{button, checkbox, column, container, row, text, text_input, Rule},
 	window::close,
 	Alignment, Application, Command, Element, Length, Subscription, Theme as IcedTheme,
 };
@@ -22,6 +25,8 @@ use iced_aw::{
 	helpers::{menu_bar, menu_tree},
 	menu::PathHighlight,
 	menu_tree, quad,
+	split::Axis,
+	Split,
 };
 use iced_native::futures::StreamExt;
 use parking_lot::Mutex;
@@ -33,12 +38,12 @@ use codectrl_protobuf_bindings::{
 	logs_service::{log_server_client::LogServerClient, Connection, RequestStatus, ServerDetails},
 };
 use codectrl_server::{self, ServerResult};
-use theme::{Theme, ThemeEngine};
+use theming::{Theme, ThemeEngine};
 
 use crate::view::View;
 
 mod styles;
-mod theme;
+mod theming;
 mod view;
 mod views;
 
@@ -50,7 +55,7 @@ pub enum PauseState {
 pub enum ThemeState {
 	Started(ThemeEngine),
 	Loaded(ThemeEngine),
-	Error(theme::engine::Error),
+	Error(theming::engine::Error),
 	Ended,
 }
 
@@ -185,11 +190,9 @@ impl App {
 		}
 	}
 
-	fn send_message(&self, message: Message) -> Command<Message> {
-		Command::perform(async {}, |_| message)
-	}
+	fn send_message(message: Message) -> Command<Message> { Command::perform(async {}, |_| message) }
 
-	fn start_refresh_errors_subscription(&self) -> Subscription<Message> {
+	fn start_refresh_errors_subscription() -> Subscription<Message> {
 		subscription::unfold(
 			"RefreshErrors",
 			PauseState::InProgress,
@@ -315,7 +318,7 @@ impl App {
 						),
 					},
 					GrpcConnection::Error(status, client, connection) => {
-						let code = status.code().clone();
+						let code = status.code();
 						let message = status.message().to_string();
 
 						match code {
@@ -339,8 +342,8 @@ impl App {
 }
 
 impl Application for App {
-	type Message = Message;
 	type Executor = executor::Default;
+	type Message = Message;
 	type Theme = IcedTheme;
 	type Flags = Flags;
 
@@ -401,15 +404,15 @@ impl Application for App {
 					self.host = host;
 					self.port = port;
 
-					self.send_message(SetServerErrorChannel(Arc::new(channel)))
+					Self::send_message(SetServerErrorChannel(Arc::new(channel)))
 				},
 				Ok(x) if x.is_err() => {
 					let error = x.unwrap_err();
 
-					self.send_message(AddServerError(Some(Arc::new(error))))
+					Self::send_message(AddServerError(Some(Arc::new(error))))
 				},
 				Ok(_) => unreachable!(),
-				Err(_) => self.send_message(AddServerError(Some(Arc::new(Error::msg(
+				Err(_) => Self::send_message(AddServerError(Some(Arc::new(Error::msg(
 					"Could not unwrap server result",
 				))))),
 			},
@@ -417,7 +420,7 @@ impl Application for App {
 				if let Ok(rx) = Arc::try_unwrap(rx) {
 					self.server_errors_channel = Some(Arc::new(Mutex::new(rx)));
 				} else {
-					return self.send_message(AddServerError(Some(Arc::new(Error::msg(
+					return Self::send_message(AddServerError(Some(Arc::new(Error::msg(
 						"Could not unwrap server error receiver",
 					)))));
 				}
@@ -434,18 +437,18 @@ impl Application for App {
 						None
 					}
 				},
-				|msg| AddServerError(msg),
+				AddServerError,
 			),
 			AddServerError(error) => {
 				if let Some(error) = error {
 					self.server_errors.push(error);
 				}
 
-				self.send_message(ShowServerErrors)
+				Self::send_message(ShowServerErrors)
 			},
 			GetConnectionDetails(mut client, details) => match details {
 				Some(details) =>
-					self.send_message(SetConnectionDetails(Arc::new(Some(Response::new(details))))),
+					Self::send_message(SetConnectionDetails(Arc::new(Some(Response::new(details))))),
 				None if Instant::now().duration_since(self.last_updated).as_secs() >= 1 =>
 					Command::perform(
 						async move { Arc::new(client.get_server_details(()).await.ok()) },
@@ -474,7 +477,7 @@ impl Application for App {
 					let channel = self.server_errors_channel.as_ref().unwrap();
 					let channel = Arc::clone(channel);
 
-					self.send_message(GetServerErrors(channel))
+					Self::send_message(GetServerErrors(channel))
 				} else {
 					Command::none()
 				};
@@ -488,7 +491,7 @@ impl Application for App {
 				let show = Command::batch(
 					show
 						.iter()
-						.map(|error| self.send_message(ShowServerError(Arc::clone(error)))),
+						.map(|error| Self::send_message(ShowServerError(Arc::clone(error)))),
 				);
 
 				Command::batch(vec![get, show])
@@ -506,16 +509,6 @@ impl Application for App {
 				Command::none()
 			},
 		}
-	}
-
-	fn subscription(&self) -> Subscription<Self::Message> {
-		let mut batch = vec![];
-
-		batch.push(self.start_refresh_errors_subscription());
-		batch.push(self.start_load_themes_subscription());
-		batch.push(self.start_get_logs_subscription());
-
-		Subscription::batch(batch)
 	}
 
 	fn view(&self) -> Element<Self::Message> {
@@ -544,7 +537,7 @@ impl Application for App {
 
 		let mut theme_elements = vec![];
 
-		for (index, theme) in self.theme_engine.get_themes().read().iter().enumerate() {
+		for theme in self.theme_engine.get_themes().read().iter() {
 			let choice = checkbox(theme.get_name(), *theme == self.theme, |_| Message::NoOp).into();
 
 			theme_elements.push(choice);
@@ -609,5 +602,13 @@ impl Application for App {
 		} else {
 			IcedTheme::Dark
 		}
+	}
+
+	fn subscription(&self) -> Subscription<Self::Message> {
+		Subscription::batch(vec![
+			Self::start_refresh_errors_subscription(),
+			self.start_load_themes_subscription(),
+			self.start_get_logs_subscription(),
+		])
 	}
 }

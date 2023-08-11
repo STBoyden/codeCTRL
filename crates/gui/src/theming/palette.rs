@@ -21,7 +21,7 @@ pub enum Error {
 #[derive(Debug, Serialize, Deserialize, Clone, Hash, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Colour {
-	RGB { r: u8, g: u8, b: u8 },
+	Rgb { r: u8, g: u8, b: u8 },
 	Hex(String),
 	// HSV { h: f32, s: f32, v: f32 },
 }
@@ -33,10 +33,10 @@ impl TryInto<Color> for Colour {
 
 	fn try_into(self) -> Result<Color> {
 		match self {
-			Self::RGB { r, g, b } => Ok(Color {
-				r: r as f32 / 255.0,
-				g: g as f32 / 255.0,
-				b: b as f32 / 255.0,
+			Self::Rgb { r, g, b } => Ok(Color {
+				r: f32::from(r) / 255.0,
+				g: f32::from(g) / 255.0,
+				b: f32::from(b) / 255.0,
 				a: 1.0,
 			}),
 			Self::Hex(mut hex_code) => {
@@ -68,9 +68,9 @@ impl TryInto<Color> for Colour {
 				}
 
 				Ok(Color {
-					r: rgb[0] as f32 / 255.0,
-					g: rgb[1] as f32 / 255.0,
-					b: rgb[2] as f32 / 255.0,
+					r: f32::from(rgb[0]) / 255.0,
+					g: f32::from(rgb[1]) / 255.0,
+					b: f32::from(rgb[2]) / 255.0,
 					a: 1.0,
 				})
 			},

@@ -5,7 +5,7 @@ pub struct MenuStyle;
 impl menu::StyleSheet for MenuStyle {
 	type Style = iced::Theme;
 
-	fn appearance(&self, style: &Self::Style) -> menu::Appearance { todo!() }
+	fn appearance(&self, _style: &Self::Style) -> menu::Appearance { todo!() }
 }
 
 pub struct MenuButtonStyle;

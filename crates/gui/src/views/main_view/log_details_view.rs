@@ -2,7 +2,7 @@ use crate::{view::View, Message};
 
 use codectrl_protobuf_bindings::data::Log;
 use iced::{
-	widget::{button, column, row, text},
+	widget::{button, column, container, row, text},
 	Command,
 };
 use iced_aw::{split::Axis, Split};
@@ -21,14 +21,20 @@ impl LogDetails {
 		}
 	}
 
-	fn trace_view(&self) -> iced::Element<'_, Message> { column![].into() }
+	fn trace_view(&self) -> iced::Element<'_, Message> {
+		let container = container(text(&self.log.message));
+
+		container.into()
+	}
+	// NOTE: temporary
+	#[allow(clippy::unused_self)]
 	fn code_view(&self) -> iced::Element<'_, Message> { column![].into() }
 }
 
 impl View for LogDetails {
 	type Message = Message;
 
-	fn update(&mut self, message: Self::Message) -> iced::Command<Self::Message> {
+	fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
 		match message {
 			Message::LogDetailsInnerSplitResize(size) => {
 				self.split_size = Some(size);
