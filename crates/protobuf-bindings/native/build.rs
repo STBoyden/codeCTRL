@@ -2,7 +2,7 @@ use std::path::Path;
 
 fn main() {
 	let mut config = prost_build::Config::new();
-	config.btree_map(&["."]);
+	config.btree_map(["."]);
 
 	let path = std::env::current_dir().unwrap();
 	let current_dir = path.clone().as_os_str().to_string_lossy().to_string();
