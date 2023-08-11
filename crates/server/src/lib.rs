@@ -1,5 +1,5 @@
 #![warn(clippy::pedantic)]
-#![allow(clippy::invalid_regex)]
+#![allow(clippy::invalid_regex, clippy::too_many_lines)]
 
 mod entity;
 pub mod redirect_handler;
@@ -215,7 +215,7 @@ impl Service {
 		}
 
 		match metadata.get("x-host") {
-			Some(host) if matches!(remote_addr, Some(_)) =>
+			Some(host) if remote_addr.is_some() =>
 				if let Ok(host) = host.to_str() {
 					log.address = format!("{host}:{}", remote_addr.unwrap().port());
 				} else {
@@ -225,7 +225,7 @@ impl Service {
 				if let Ok(host) = host.to_str() {
 					log.address = host.to_string();
 				},
-			None if matches!(remote_addr, Some(_)) => log.address = remote_addr.unwrap().to_string(),
+			None if remote_addr.is_some() => log.address = remote_addr.unwrap().to_string(),
 
 			None => log.address = "Unknown".into(),
 		}
