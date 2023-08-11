@@ -1,9 +1,9 @@
-use crate::{view::View, Message, ViewState};
-
 use iced::{
 	widget::{container, text},
 	Command, Element,
 };
+
+use crate::{view::View, Message, ViewState};
 
 #[derive(Debug, Clone, Default)]
 pub struct Searching {
@@ -31,7 +31,7 @@ impl View for Searching {
 				self.send_message(Message::UpdateViewState(ViewState::Searching))
 			},
 			ClearFilterText => self.send_message(Message::FilterTextChanged(String::new())),
-			FilterCaseSenitivityChanged(state) => {
+			FilterCaseSensitivityChanged(state) => {
 				self.case_sensitive = state;
 				Command::none()
 			},

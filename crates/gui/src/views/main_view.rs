@@ -118,7 +118,7 @@ impl View for Main {
 	fn view(&self) -> iced::Element<'_, Self::Message> {
 		let mut elements = vec![];
 
-		for item in self.logs.iter() {
+		for item in &self.logs {
 			elements.push(item.view());
 		}
 

@@ -18,10 +18,18 @@ pub struct LogItem {
 impl LogItem {
 	pub fn new(log: Log, time: DateTime<Local>) -> Self {
 		Self {
-			log,
+			log: Self::parse_log(log),
 			time,
 			selected: false,
 		}
+	}
+}
+
+impl LogItem {
+	fn parse_log(mut log: Log) -> Log {
+		log.message = log.message.replace('\"', "");
+
+		log
 	}
 }
 

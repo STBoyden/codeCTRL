@@ -2,27 +2,19 @@
 #![warn(clippy::perf, clippy::pedantic)]
 #![allow(clippy::enum_glob_use)]
 
-mod styles;
-mod theme;
-mod view;
-mod views;
-
-pub use iced;
-use theme::{Theme, ThemeEngine};
-
-use crate::view::View;
+use std::{
+	borrow::Cow,
+	sync::Arc,
+	time::{Duration, Instant},
+};
 
 use anyhow::Error;
-use codectrl_protobuf_bindings::{
-	data::Log,
-	logs_service::{log_server_client::LogServerClient, Connection, RequestStatus, ServerDetails},
-};
-use codectrl_server::{self, ServerResult};
-use dark_light::{self, Mode as ThemeMode};
+use dark_light::{self};
+pub use iced;
 use iced::{
 	executor, subscription,
-	theme::{Custom, Palette},
-	widget::{button, checkbox, column, container, row, text, text_input, Rule},
+	theme::Custom,
+	widget::{button, checkbox, column, container},
 	window::close,
 	Alignment, Application, Command, Element, Length, Subscription, Theme as IcedTheme,
 };
@@ -30,20 +22,25 @@ use iced_aw::{
 	helpers::{menu_bar, menu_tree},
 	menu::PathHighlight,
 	menu_tree, quad,
-	split::Axis,
-	Split,
 };
 use iced_native::futures::StreamExt;
 use parking_lot::Mutex;
-use std::{
-	borrow::Cow,
-	cell::{Cell, RefCell},
-	fs::File,
-	sync::{atomic::AtomicI32, Arc},
-	time::{Duration, Instant},
-};
 use tokio::sync::mpsc;
 use tonic::{transport::Channel, Response, Status, Streaming};
+
+use codectrl_protobuf_bindings::{
+	data::Log,
+	logs_service::{log_server_client::LogServerClient, Connection, RequestStatus, ServerDetails},
+};
+use codectrl_server::{self, ServerResult};
+use theme::{Theme, ThemeEngine};
+
+use crate::view::View;
+
+mod styles;
+mod theme;
+mod view;
+mod views;
 
 pub enum PauseState {
 	Paused,
@@ -53,7 +50,7 @@ pub enum PauseState {
 pub enum ThemeState {
 	Started(ThemeEngine),
 	Loaded(ThemeEngine),
-	Error(crate::theme::engine::Error),
+	Error(theme::engine::Error),
 	Ended,
 }
 
@@ -86,7 +83,7 @@ pub enum Message {
 	// searching view
 	FilterTextChanged(String),
 	ClearFilterText,
-	FilterCaseSenitivityChanged(bool),
+	FilterCaseSensitivityChanged(bool),
 	FilterRegexChanged(bool),
 
 	// general
@@ -384,7 +381,7 @@ impl Application for App {
 
 			FilterTextChanged(_)
 			| ClearFilterText
-			| FilterCaseSenitivityChanged(_)
+			| FilterCaseSensitivityChanged(_)
 			| FilterRegexChanged(_) => self.searching_view.update(message),
 
 			UpdateViewState(state) => {
@@ -560,7 +557,7 @@ impl Application for App {
 				checkbox(
 					"Case sensitive",
 					self.searching_view.case_sensitive,
-					Message::FilterCaseSenitivityChanged
+					Message::FilterCaseSensitivityChanged
 				),
 				checkbox(
 					"Regex",

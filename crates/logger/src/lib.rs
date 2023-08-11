@@ -1,18 +1,5 @@
 #![doc = include_str!("../README.md")]
 
-// TODO(important): Replace tokio runtime handlers with tasks and LocalSet.
-
-#[cfg(test)]
-mod tests;
-
-use backtrace::Backtrace;
-use codectrl_protobuf_bindings::{
-	data::{BacktraceData, Log},
-	logs_service::{LoggerClient, RequestResult, RequestStatus},
-};
-use futures_util::stream;
-use hashbag::HashBag;
-use serde::{Deserialize, Serialize};
 use std::{
 	cell::RefCell,
 	collections::{BTreeMap, VecDeque},
@@ -22,8 +9,21 @@ use std::{
 	fs::File,
 	io::{self, prelude::*, BufReader},
 };
+
+use backtrace::Backtrace;
+use futures_util::stream;
+use hashbag::HashBag;
+use serde::{Deserialize, Serialize};
 use tokio::runtime::{Handle, Runtime};
 use tonic::Request;
+
+use codectrl_protobuf_bindings::{
+	data::{BacktraceData, Log},
+	logs_service::{LoggerClient, RequestResult, RequestStatus},
+};
+
+#[cfg(test)]
+mod tests;
 
 /// The Error type used by [`Logger`] and [`LogBatch`] whenever something can
 /// potentially fail.
@@ -50,8 +50,8 @@ pub enum LoggerError {
 	#[error("This logger encountered an error: {0}")]
 	LoggerError(String),
 	/// Any other error with unknown origins.
-	#[error("An unknown error occured: {0}")]
-	Other(#[from] anyhow::AnyhowError),
+	#[error("An unknown error occurred: {0}")]
+	Other(#[from] anyhow::Error),
 }
 
 impl From<RequestResult> for LoggerError {
@@ -87,7 +87,7 @@ fn create_log<T: Debug>(
 	message: T,
 	surround: Option<u32>,
 	function_name: Option<&str>,
-	function_name_occurences: Option<&HashBag<&'static str>>,
+	function_name_occurrences: Option<&HashBag<&'static str>>,
 ) -> Log {
 	let function_name = function_name.unwrap_or_default();
 
@@ -134,7 +134,7 @@ fn create_log<T: Debug>(
 			&mut log.line_number,
 			surround,
 			function_name,
-			function_name_occurences,
+			function_name_occurrences,
 		);
 
 		log.file_name = last.file_path.clone();
@@ -196,7 +196,7 @@ impl<'a> LogBatch<'a> {
 		self
 	}
 
-	/// Batch equivelent of [`Logger::log`]. See [`Logger::log`] for relevant
+	/// Batch equivalent of [`Logger::log`]. See [`Logger::log`] for relevant
 	/// documentation.
 	pub fn add_log<T: Debug>(mut self, message: T, surround: Option<u32>) -> Self {
 		let surround = Some(surround.unwrap_or(self.surround));
@@ -213,7 +213,7 @@ impl<'a> LogBatch<'a> {
 		self
 	}
 
-	/// Batch equivelent of [`Logger::log_if`]. See [`Logger::log_if`] for
+	/// Batch equivalent of [`Logger::log_if`]. See [`Logger::log_if`] for
 	/// relevant documentation.
 	pub fn add_log_if<T: Debug>(
 		mut self,
@@ -237,7 +237,7 @@ impl<'a> LogBatch<'a> {
 		self
 	}
 
-	/// Batch equivelent of [`Logger::boxed_log_if`]. See
+	/// Batch equivalent of [`Logger::boxed_log_if`]. See
 	/// [`Logger::boxed_log_if`] for relevant documentation.
 	pub fn add_boxed_log_if<T: Debug>(
 		mut self,
@@ -261,7 +261,7 @@ impl<'a> LogBatch<'a> {
 		self
 	}
 
-	/// Batch equivelent of [`Logger::log_when_env`]. See
+	/// Batch equivalent of [`Logger::log_when_env`]. See
 	/// [`Logger::log_when_env`] for relevant documentation.
 	pub fn add_log_when_env<T: Debug>(mut self, message: T, surround: Option<u32>) -> Self {
 		let surround = Some(surround.unwrap_or(self.surround));
@@ -314,7 +314,7 @@ pub struct Logger<'a> {
 impl<'a> Logger<'a> {
 	/// Returns a [`LogBatch`], which can be used to start the process of
 	/// generating multiple logs to be sent in a single connection. Should
-	/// be preferred over sending one-time [`Log`]s if possile.
+	/// be preferred over sending one-time [`Log`]s if possible.
 	///
 	/// [`Log`]: codectrl_protobuf_bindings::data::Log
 	pub fn start_batch() -> LogBatch<'a> { LogBatch::new(Self::default()) }
@@ -590,7 +590,7 @@ impl<'a> Logger<'a> {
 		line_number: &mut u32,
 		surround: u32,
 		function_name: &str,
-		function_name_occurences: Option<&HashBag<&'static str>>,
+		function_name_occurrences: Option<&HashBag<&'static str>>,
 	) -> BTreeMap<u32, String> {
 		let file = File::open(file_path)
 			.unwrap_or_else(|_| panic!("Unexpected error: could not open file: {}", file_path));
@@ -604,10 +604,10 @@ impl<'a> Logger<'a> {
 			.map(|(n, line)| ((n + 1) as u32, line.unwrap()))
 			.collect();
 
-		if let Some(function_name_occurences) = function_name_occurences {
+		if let Some(function_name_occurrences) = function_name_occurrences {
 			if !function_name.is_empty() {
 				let offset = RefCell::new(1);
-				let occurences = function_name_occurences.contains(function_name);
+				let occurrences = function_name_occurrences.contains(function_name);
 
 				// In the case of batch commands, this attempts to find the line number
 				// for each `add_x` command, rather than the `start_batch`
@@ -638,8 +638,8 @@ impl<'a> Logger<'a> {
 						})
 					})
 					.nth({
-						if occurences > 1 {
-							occurences.saturating_sub(*offset.borrow())
+						if occurrences > 1 {
+							occurrences.saturating_sub(*offset.borrow())
 						} else {
 							0
 						}
