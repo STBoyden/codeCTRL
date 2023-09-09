@@ -9,7 +9,9 @@
       "request": "launch",
       "name": "Run",
       "cargo": {
-        "args": ["build"],
+        "args": [
+          "build"
+        ],
         "filter": {
           "name": "codectrl",
           "kind": "bin"
@@ -18,20 +20,5 @@
       "args": [],
       "cwd": "${workspaceFolder}"
     },
-
-    {
-      "type": "lldb",
-      "request": "launch",
-      "name": "Run (headless)",
-      "cargo": {
-        "args": ["build"],
-        "filter": {
-          "name": "codectrl",
-          "kind": "bin"
-        }
-      },
-      "args": ["-H"],
-      "cwd": "${workspaceFolder}"
-    }
   ]
 }
