@@ -31,7 +31,7 @@ Unofficial language loggers:
 Below you will find the requirements to build on each platform. The supported platform(s)
 are:
 
-- [Linux](#linux) - Supported: Ubuntu 22.04, Ubuntu 20.04, Fedora 38, Fedora Rawhide,
+- [Linux](#linux) - Supported: Ubuntu 23.04, Ubuntu 22.04, Ubuntu 20.04, Fedora 38, Fedora Rawhide,
   Debian 11, Debian 10 and Debian Sid.
 - [Windows](#windows-and-macos)
 - [MacOS](#windows-and-macos) - Supported: 13, 12, 11 (Intel and Apple Silicon).
@@ -47,8 +47,8 @@ underneath each of the **_completed_** CI jobs.
 The current _officially_ supported Linux distributions are the following:
 
 - [Fedora (38, Rawhide)](#fedora-and-rhel)
-- [RHEL, and compatible distros (7, 8, 9)](#fedora-and-rhel)
-- [Ubuntu (22.04, 20.04) and Debian (12, Sid)](#debian-based)
+- [RHEL, and compatible distros (8, 9)](#fedora-and-rhel)
+- [Ubuntu (23.04, 22.04, 20.04) and Debian (12, Sid)](#debian-based)
 
 **_NOTE:_** You can use the `./bootstrap-build.sh` or the
 `./bootstrap-action.sh` scripts to automatically install the dependencies for
@@ -72,16 +72,12 @@ Aside from the Cargo toolchain, you will need:
 - `freetype-devel `
 - `expat-devel`
 - `fontconfig-devel`
-- `cmake`^[[1](#note-rhel-cmake)]
+- `cmake`
 - A C++ compiler, most likely `g++` or `clang`
-
-<div id="note-rhel-cmake" />
-
-_*Note:*_ you _will_ need to install `cmake3` if you are on RHEL 7 and symlink it to `/usr/bin/cmake`, otherwise the build will fail.
 
 #### Debian-based
 
-There is support for Ubuntu 22.04, Ubuntu 20.04, Debian 11, Debian 10 and
+There is support for Ubuntu 23.04, Ubuntu 22.04, Ubuntu 20.04, Debian 11, Debian 10 and
 Debian Sid.
 
 ##### Build dependencies
