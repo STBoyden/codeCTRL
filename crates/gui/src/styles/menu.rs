@@ -8,4 +8,5 @@ impl menu::StyleSheet for MenuStyle {
 	fn appearance(&self, _style: &Self::Style) -> menu::Appearance { todo!() }
 }
 
+#[allow(dead_code)]
 pub struct MenuButtonStyle;

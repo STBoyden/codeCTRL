@@ -60,7 +60,6 @@ pub enum ThemeState {
 }
 
 type Client = LogServerClient<Channel>;
-
 pub enum GrpcConnection {
 	NotConnected(String, u32),
 	Connected(Client, Option<Connection>),
@@ -190,7 +189,7 @@ impl App {
 		}
 	}
 
-	fn send_message(message: Message) -> Command<Message> { Command::perform(async {}, |_| message) }
+	fn send_message(message: Message) -> Command<Message> { Command::perform(async {}, |()| message) }
 
 	fn start_refresh_errors_subscription() -> Subscription<Message> {
 		subscription::unfold(
@@ -216,7 +215,7 @@ impl App {
 			move |state| async move {
 				match state {
 					ThemeState::Started(mut engine) => match engine.load_themes().await {
-						Ok(_) => (Message::NoOp, ThemeState::Loaded(engine)),
+						Ok(()) => (Message::NoOp, ThemeState::Loaded(engine)),
 						Err(e) => (Message::NoOp, ThemeState::Error(e)),
 					},
 					ThemeState::Loaded(engine) => (Message::ThemesLoaded(engine), ThemeState::Ended),

@@ -334,7 +334,7 @@ impl<'a> Logger<'a> {
 
 		let mut ret = Ok(());
 
-		async fn send_batch(host: &str, port: &str, logs: &mut VecDeque<Log>) -> LoggerResult<()> {
+		async fn send_batch(host: &str, port: &str, logs: &VecDeque<Log>) -> LoggerResult<()> {
 			let mut log_client = LoggerClient::connect(format!("http://{host}:{port}")).await?;
 
 			let request = Request::new(stream::iter(logs.clone()));
@@ -360,13 +360,13 @@ impl<'a> Logger<'a> {
 
 		if let Some(handle) = self.batch_tokio_runtime {
 			handle.block_on(async {
-				ret = send_batch(self.batch_host, self.batch_port, &mut self.log_batch).await;
+				ret = send_batch(self.batch_host, self.batch_port, &self.log_batch).await;
 			});
 		} else {
 			let rt = Runtime::new()?;
 
 			rt.block_on(async {
-				ret = send_batch(self.batch_host, self.batch_port, &mut self.log_batch).await;
+				ret = send_batch(self.batch_host, self.batch_port, &self.log_batch).await;
 			})
 		}
 
@@ -391,19 +391,19 @@ impl<'a> Logger<'a> {
 		let host = host.unwrap_or("127.0.0.1");
 		let port = port.unwrap_or("3002");
 
-		let mut log = create_log(message, surround, None, None);
+		let log = create_log(message, surround, None, None);
 
 		let mut ret = Ok(());
 
 		if let Some(handle) = tokio_runtime {
 			handle.block_on(async {
-				ret = Self::_log(&mut log, host, port).await;
+				ret = Self::_log(&log, host, port).await;
 			});
 		} else {
 			let rt = Runtime::new()?;
 
 			rt.block_on(async {
-				ret = Self::_log(&mut log, host, port).await;
+				ret = Self::_log(&log, host, port).await;
 			})
 		}
 
@@ -483,7 +483,7 @@ impl<'a> Logger<'a> {
 	//
 	// TODO: Provide a direct wrapper so that async environments do not need to call
 	// a non-async wrapper, just for that to call an async wrapper.
-	async fn _log(log: &mut Log, host: &str, port: &str) -> LoggerResult<()> {
+	async fn _log(log: &Log, host: &str, port: &str) -> LoggerResult<()> {
 		let mut log_client = LoggerClient::connect(format!("http://{host}:{port}")).await?;
 
 		let request = Request::new(log.clone());

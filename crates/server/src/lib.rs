@@ -55,6 +55,7 @@ use tokio::{
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{metadata::MetadataMap, transport::Server, Code, Request, Response, Status, Streaming};
 use uuid::Uuid;
+// use warp::filters::host;
 
 // endregion
 
@@ -364,8 +365,8 @@ impl LogServerTrait for Service {
 		let logs = self.logs.read().await.clone();
 		let mut logs = logs
 			.iter()
+			.filter(|&log| !ignore.contains(&log.uuid))
 			.cloned()
-			.filter(|log| !ignore.contains(&log.uuid))
 			.collect::<VecDeque<_>>();
 
 		if let Some(log) = logs.pop_front() {
@@ -423,8 +424,8 @@ impl LogServerTrait for Service {
 		let logs = self.logs.read().await.clone();
 		let mut logs = logs
 			.iter()
+			.filter(|&log| !ignore.contains(&log.uuid))
 			.cloned()
-			.filter(|log| !ignore.contains(&log.uuid))
 			.collect::<VecDeque<_>>();
 
 		let log_amount = logs.len();
@@ -714,12 +715,13 @@ pub async fn run_server(
 
 	let db_connection = Database::connect(format!("sqlite:{db_file}")).await?;
 
-	let host = if host.is_some() {
-		host.unwrap()
+	let host = if let Some(host) = host {
+		host
 	} else {
 		String::from("127.0.0.1")
 	};
-	let port = if port.is_some() { port.unwrap() } else { 3002 };
+
+	let port = if let Some(port) = port { port } else { 3002 };
 
 	let logs = Arc::new(RwLock::new(VecDeque::new()));
 

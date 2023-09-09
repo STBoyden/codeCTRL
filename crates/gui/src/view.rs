@@ -11,7 +11,7 @@ pub trait View {
 	where
 		Self::Message: 'static + Send,
 	{
-		Command::perform(async {}, |_| message)
+		Command::perform(async {}, |()| message)
 	}
 }
 
@@ -26,6 +26,6 @@ pub trait ViewBorrowed {
 	where
 		Self::Message: 'static + Send,
 	{
-		Command::perform(async {}, |_| message)
+		Command::perform(async {}, |()| message)
 	}
 }
